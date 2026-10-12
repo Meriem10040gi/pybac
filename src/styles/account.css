@@ -1,0 +1,380 @@
+/* Login page, form fields, account block, and the "Suivi des élèves" pages (admins). */
+
+/* ---------- fields ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--encre-line);
+  background: var(--paper);
+  font-size: var(--t-md);
+  font-weight: 500;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--encre);
+  box-shadow: 0 0 0 3px #e0a80055;
+}
+
+.field-row {
+  display: flex;
+  gap: 6px;
+}
+
+.field-toggle {
+  flex: none;
+  padding: 0 12px;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: var(--encre);
+}
+
+.field-hint {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+/* ---------- login ---------- */
+
+.login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--encre);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px 28px 28px calc(var(--margin-x) + 22px);
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 60px -24px #0008;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.login-brand img {
+  border-radius: 14px;
+}
+
+.login-brand h1 {
+  font-size: var(--t-2xl);
+  font-weight: 900;
+}
+
+.login-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: var(--r-md);
+  background: var(--encre-soft);
+}
+
+.login-tabs button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-weight: 750;
+  color: var(--encre);
+}
+
+.login-tabs button.is-on {
+  background: var(--paper);
+  box-shadow: 0 1px 3px #1f4b7333;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-form .btn {
+  margin-top: 4px;
+}
+
+.login-note {
+  font-size: var(--t-sm);
+}
+
+@media (max-width: 640px) {
+  .login {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .login-card {
+    border-radius: 0;
+    max-width: none;
+    justify-content: center;
+    padding: 32px 20px 32px calc(var(--margin-x) + 16px);
+  }
+}
+
+/* ---------- account (menu and phone settings) ---------- */
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+
+.sidebar .account {
+  border-top-color: #ffffff26;
+}
+
+.account-email {
+  font-weight: 750;
+  font-size: var(--t-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-sync {
+  font-size: var(--t-xs);
+  opacity: 0.8;
+  padding-left: 14px;
+  position: relative;
+}
+
+.account-sync::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--encre-line);
+}
+
+.account-sync.is-saved::before {
+  background: #3fbf7f;
+}
+
+.account-sync.is-offline::before {
+  background: var(--gold);
+}
+
+.home-settings .account {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.tabbar.is-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* ---------- admin ---------- */
+
+.admin {
+  max-width: 1100px;
+}
+
+.admin-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-tools {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-search {
+  flex: 1;
+  min-width: 220px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.admin-table thead th {
+  font-size: var(--t-xs);
+  color: var(--muted);
+  font-weight: 750;
+  background: var(--code-bg);
+}
+
+.admin-table tbody tr:last-child th,
+.admin-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-table tbody th a {
+  color: var(--encre);
+  font-weight: 750;
+  margin-right: 8px;
+}
+
+.admin-table tbody th a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.admin-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+}
+
+.admin-email {
+  font-size: var(--t-xl);
+  word-break: break-all;
+}
+
+.admin-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+}
+
+.admin-stats > div {
+  flex: 1;
+  min-width: 150px;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.admin-stats dt {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.admin-stats dd {
+  margin: 0;
+  font-size: var(--t-xl);
+  font-weight: 900;
+  font-variation-settings: var(--hand);
+  color: var(--encre);
+}
+
+.admin-module {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-module h2 {
+  font-size: var(--t-lg);
+  margin-top: 8px;
+}
+
+.admin-unit {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.admin-unit summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.admin-unit ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 14px 10px;
+}
+
+.admin-unit li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+  border-top: 1px dashed var(--line);
+  font-size: var(--t-sm);
+}
+
+.admin-unit li.is-done > span:first-child {
+  color: var(--ok-deep);
+  font-weight: 700;
+}
+
+.admin-unit li.is-current > span:first-child {
+  color: var(--marge-deep);
+  font-weight: 700;
+}
+
+.admin-lesson-state {
+  color: var(--muted);
+}
+
+.admin-password {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  margin-top: 8px;
+}
+
+.admin-password h2 {
+  font-size: var(--t-lg);
+}

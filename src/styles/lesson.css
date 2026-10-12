@@ -1,0 +1,329 @@
+/* Lesson player: a bar at the top (quit, progress), the step on a notebook page, and the action bar
+   always visible at the bottom of the screen. Code and SQL exercises use the whole width. */
+
+.lesson {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lesson-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: calc(10px + var(--safe-top)) 16px 10px;
+  background: #e9eef5ee;
+  backdrop-filter: blur(6px);
+}
+
+.lesson-top > * {
+  flex: none;
+}
+
+.lesson-top > .progress {
+  flex: 1;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.lesson-close {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.lesson-close:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.lesson-count {
+  min-width: 52px;
+  text-align: right;
+  font-size: var(--t-sm);
+  font-weight: 750;
+  color: var(--muted);
+}
+
+.lesson-main {
+  flex: 1;
+  padding: 4px 16px 24px;
+}
+
+.lesson-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 28px 24px 36px calc(var(--margin-x) + 22px);
+  border-radius: var(--r-lg);
+  box-shadow: 0 1px 0 var(--line), 0 12px 32px -20px #1f4b7366;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 60vh;
+}
+
+.lesson-page:focus {
+  outline: none;
+}
+
+.lesson-page.is-wide {
+  max-width: 1280px;
+}
+
+.lesson-where {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--t-sm);
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.resume {
+  gap: 6px;
+}
+
+.step-title {
+  font-size: var(--t-2xl);
+  font-weight: 900;
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: var(--t-md);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+@media (max-width: 640px) {
+  .lesson-main {
+    padding: 0;
+  }
+
+  .lesson-page {
+    border-radius: 0;
+    box-shadow: none;
+    padding: 20px 16px 28px calc(var(--margin-x) + 14px);
+  }
+
+  .step-title {
+    font-size: var(--t-xl);
+  }
+
+  .prompt {
+    font-size: var(--t-md);
+  }
+}
+
+/* code and SQL exercises: the instructions on the left, the editor on the right */
+.workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+.brief,
+.bench {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+@media (min-width: 1100px) {
+  .workbench {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    gap: 28px;
+  }
+
+  .bench {
+    position: sticky;
+    top: 70px;
+  }
+}
+
+/* ---------- action bar ---------- */
+
+.lesson-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: var(--paper);
+  border-top: 2px solid var(--line);
+  padding: 14px 16px calc(14px + var(--safe-bottom));
+}
+
+.lesson-bar.is-ok {
+  background: var(--ok-soft);
+  border-top-color: var(--ok);
+}
+
+.lesson-bar.is-bad {
+  background: var(--marge-soft);
+  border-top-color: var(--marge);
+}
+
+.lesson-bar.is-info {
+  background: var(--encre-soft);
+  border-top-color: var(--encre);
+}
+
+.lesson-bar-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+}
+
+.lesson-bar-inner.is-wide {
+  max-width: 1280px;
+}
+
+.feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 38vh;
+  overflow-y: auto;
+  font-size: var(--t-sm);
+  animation: rise 220ms ease-out;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.verdict {
+  font-size: var(--t-xl);
+  font-weight: 900;
+  font-variation-settings: var(--hand);
+}
+
+.is-ok .verdict {
+  color: var(--ok);
+}
+
+.is-bad .verdict {
+  color: var(--marge-deep);
+}
+
+.is-info .verdict {
+  color: var(--encre);
+}
+
+.lesson-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.lesson-actions .btn {
+  flex: 1;
+}
+
+.lesson-keys {
+  display: none;
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+
+@media (min-width: 720px) {
+  .lesson-bar-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 24px;
+  }
+
+  .lesson-actions {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+
+  .lesson-actions .btn {
+    flex: none;
+    min-width: 180px;
+  }
+
+  .lesson-keys {
+    display: block;
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .feedback,
+  .lesson-bar-inner > .alert {
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
+
+/* ---------- end of the lesson ---------- */
+
+.lesson-finished {
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.finished {
+  width: 100%;
+  max-width: 560px;
+  padding: 40px 28px 32px calc(var(--margin-x) + 24px);
+  border-radius: var(--r-lg);
+  box-shadow: 0 12px 32px -20px #1f4b7366;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.finished h1 {
+  font-size: var(--t-3xl);
+  font-weight: 900;
+}
+
+.finished-stars {
+  font-size: 3.25rem;
+  line-height: 1;
+  letter-spacing: 6px;
+  color: var(--gold);
+}
+
+.finished-stats {
+  display: flex;
+  gap: 32px;
+  margin: 0;
+}
+
+.finished-stats dt {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.finished-stats dd {
+  margin: 0;
+  font-size: var(--t-xl);
+  font-weight: 900;
+}
+
+.finished-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}

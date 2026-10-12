@@ -1,0 +1,203 @@
+import type { Unit } from '../types';
+
+export const dictionnaires: Unit = {
+  id: 'dictionnaires',
+  title: 'Les dictionnaires',
+  subtitle: 'clés, valeurs, parcours, compteurs',
+  chapter: 'Chapitre 0',
+  lessons: [
+    {
+      id: 'dictionnaires-1',
+      title: 'Des clés et des valeurs',
+      steps: [
+        {
+          kind: 'card',
+          title: 'Un dictionnaire',
+          body: [
+            'Un **dictionnaire** associe des **clés** à des **valeurs**, comme l\'annuaire d\'un réseau : nom de machine → **adresse IP** (l\'adresse de la machine sur le réseau).',
+            'Il s\'écrit entre accolades `{ }`, avec des couples `clé: valeur` séparés par des virgules.',
+            'On lit une valeur avec sa clé : `ip["serveur"]`. Pas d\'indice 0, 1, 2 : on cherche par la **clé**. `len(ip)` donne le nombre de couples.',
+          ],
+          figure: {
+            kind: 'table',
+            title: 'ip',
+            columns: ['clé', 'valeur'],
+            rows: [
+              ['serveur', '10.0.0.1'],
+              ['imprimante', '10.0.0.7'],
+            ],
+          },
+          code: 'ip = {"serveur": "10.0.0.1", "imprimante": "10.0.0.7"}\nprint(ip["serveur"])\nprint(len(ip))',
+          output: '10.0.0.1\n2',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Les notes des élèves, rangées par nom. Qu\'affiche ce programme ?',
+          code: 'notes = {"Nadia": 15, "Omar": 9, "Lina": 12}\nprint(notes["Lina"] + 2)',
+          options: ['14', '12', '17', 'Erreur'],
+          answer: 0,
+          mono: true,
+          explain: '`notes["Lina"]` est la valeur associée à la clé `"Lina"` : 12. On affiche donc 12 + 2 = 14.',
+        },
+        {
+          kind: 'card',
+          title: 'Ajouter, modifier, tester',
+          body: [
+            '`d[cle] = v` **ajoute** le couple si la clé n\'existe pas, et **modifie** la valeur si la clé existe déjà. Une clé n\'apparaît jamais deux fois.',
+            '`cle in d` vaut `True` si la clé existe. Attention : `in` cherche parmi les **clés**, pas parmi les valeurs.',
+          ],
+          code: 'ports = {"ssh": 22, "http": 80}\nports["https"] = 443\nports["http"] = 8080\nprint(ports)\nprint("ssh" in ports)\nprint(22 in ports)',
+          output: "{'ssh': 22, 'http': 8080, 'https': 443}\nTrue\nFalse",
+          tip: 'Un **port** est un numéro qui désigne un service du réseau : 80 pour les pages web (http), 22 pour ssh.',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Que se passe-t-il avec ce programme ?',
+          code: 'ports = {"ssh": 22, "http": 80}\nprint(ports["ftp"])',
+          options: ['Il affiche 21', 'Il affiche None', 'Erreur : la clé « ftp » n\'existe pas', 'Il affiche 0'],
+          answer: 2,
+          noOutputCheck: true,
+          explain: 'Python s\'arrête avec `KeyError: \'ftp\'` (« erreur de clé »). Avant de lire une clé dont on n\'est pas sûr, on teste : `if "ftp" in ports:`.',
+        },
+        {
+          kind: 'order',
+          prompt: 'Remettez dans l\'ordre la fonction `ip_de(nom, annuaire)` : elle renvoie l\'adresse IP de la machine `nom`, ou `"inconnue"` si la machine n\'est pas dans l\'annuaire. Une ligne est en trop.',
+          mode: 'code',
+          lines: ['def ip_de(nom, annuaire):', '    if nom in annuaire:', '        return annuaire[nom]', '    return "inconnue"'],
+          distractors: ['        return annuaire[0]'],
+          tests: [
+            { call: 'ip_de("serveur", {"serveur": "10.0.0.1", "imprimante": "10.0.0.7"})', expected: "'10.0.0.1'" },
+            { call: 'ip_de("routeur", {"serveur": "10.0.0.1"})', expected: "'inconnue'" },
+          ],
+          explain: 'Le `return "inconnue"` est aligné avec le `if` : on n\'y arrive que si la clé n\'existe pas. Sans le test `in`, on aurait une `KeyError`. Et `annuaire[0]` cherche la **clé** 0, qui n\'existe pas.',
+        },
+        {
+          kind: 'card',
+          title: 'Parcourir un dictionnaire',
+          body: [
+            'Le stock de la salle informatique : objet → quantité. `for k in stock:` donne **chaque clé** à `k`, dans l\'ordre où les clés ont été ajoutées. La valeur est `stock[k]`.',
+            '`stock.values()` donne les valeurs. `stock.items()` donne les **couples** (clé, valeur) : avec `for k, v in stock.items():`, `k` reçoit la clé et `v` la valeur, à chaque tour.',
+          ],
+          code: 'stock = {"souris": 4, "clavier": 2}\nfor k in stock:\n    print(k)\nfor v in stock.values():\n    print(v)\nfor k, v in stock.items():\n    print(k, v)',
+          output: 'souris\nclavier\n4\n2\nsouris 4\nclavier 2',
+        },
+        {
+          kind: 'table',
+          prompt: 'Ce programme calcule le nombre total d\'objets du stock. Remplissez le tableau à la fin de chaque tour. Écrivez les chaînes avec leurs guillemets, par exemple `\'ab\'`.',
+          code: 'stock = {"souris": 4, "clavier": 2, "ecran": 5}\ntotal = 0\nfor k in stock:\n    total = total + stock[k]',
+          columns: ['k', 'total'],
+          rows: ['avant', 'tour 1', 'tour 2', 'tour 3'],
+          answer: [
+            ['=–', '=0'],
+            ["'souris'", '4'],
+            ["'clavier'", '6'],
+            ["'ecran'", '11'],
+          ],
+          explain: '`k` prend les **clés** dans l\'ordre d\'ajout, et `stock[k]` donne la quantité : 4, puis 4 + 2 = 6, puis 6 + 5 = 11. On aurait aussi pu écrire `for v in stock.values():` et `total = total + v`.',
+        },
+        {
+          kind: 'demo',
+          title: 'Compter avec un dictionnaire',
+          body: 'Le schéma du **compteur** : on part du dictionnaire vide `{}`. Pour chaque élément : si c\'est déjà une clé, on ajoute 1 à sa valeur ; sinon, on crée la clé avec la valeur 1. Ici, on compte les réservations de chaque salle.',
+          code: 'salles = ["B12", "A3", "B12", "C7", "B12"]\ncompte = {}\nfor s in salles:\n    if s in compte:\n        compte[s] = compte[s] + 1\n    else:\n        compte[s] = 1\nprint(compte)',
+        },
+        {
+          kind: 'fill',
+          prompt: 'Complétez la fonction `compter(L)` : elle renvoie un dictionnaire qui donne, pour chaque élément de `L`, le nombre de fois où il apparaît.',
+          code: 'def compter(L):\n    d = {}\n    for x in L:\n        if x {{in}} d:\n            d[x] = {{d[x] + 1}}\n        else:\n            d[x] = {{1}}\n    return d',
+          distractors: ['==', '0', 'x + 1'],
+          tests: [
+            { call: 'compter(["ssh", "http", "ssh"])', expected: "{'ssh': 2, 'http': 1}" },
+            { call: 'compter([80, 80, 80])', expected: '{80: 3}' },
+            { call: 'compter([])', expected: '{}' },
+          ],
+          explain: 'Si `x` est déjà une clé, on augmente sa valeur de 1. Sinon, c\'est la **première fois** qu\'on le voit : on l\'a vu une fois, donc sa valeur est 1, et non 0.',
+        },
+        {
+          kind: 'bug',
+          prompt: 'Ce programme doit afficher le nom des élèves qui ont au moins 10. Python s\'arrête sur une erreur. Touchez la ligne fautive.',
+          code: 'notes = {"Nadia": 15, "Omar": 9, "Lina": 12}\nfor nom in notes:\n    if nom >= 10:\n        print(nom)',
+          line: 3,
+          fixed: 'notes = {"Nadia": 15, "Omar": 9, "Lina": 12}\nfor nom in notes:\n    if notes[nom] >= 10:\n        print(nom)',
+          output: 'Nadia\nLina',
+          explain: '`nom` est une **clé** : un texte comme `"Nadia"`. On ne peut pas comparer un texte avec 10 (`TypeError`). La note est la **valeur** : `notes[nom]`.',
+        },
+        {
+          kind: 'code',
+          prompt: 'Écrivez une fonction `admis(notes)` qui renvoie la **liste** des noms des élèves qui ont au moins 10. Exemple : `admis({"Nadia": 15, "Omar": 9, "Lina": 12})` renvoie `[\'Nadia\', \'Lina\']`.',
+          starter: 'def admis(notes):\n    ',
+          tests: [
+            { call: 'admis({"Nadia": 15, "Omar": 9, "Lina": 12})', expected: "['Nadia', 'Lina']" },
+            { call: 'admis({"Omar": 9})', expected: '[]' },
+            { call: 'admis({"Yanis": 10, "Sara": 18})', expected: "['Yanis', 'Sara']" },
+          ],
+          solution: 'def admis(notes):\n    res = []\n    for nom in notes:\n        if notes[nom] >= 10:\n            res.append(nom)\n    return res',
+          hints: [
+            'Partez d\'une liste vide `res = []` et parcourez les clés : `for nom in notes:`.',
+            'La note est `notes[nom]`. Si elle vaut au moins 10 : `res.append(nom)`. Le `return res` est aligné avec le `for`.',
+          ],
+          explain: 'Les noms sont ajoutés dans l\'ordre du dictionnaire. On peut aussi écrire `for nom, note in notes.items():` puis `if note >= 10:`.',
+        },
+      ],
+    },
+    {
+      id: 'dictionnaires-defi',
+      title: 'Défi : le plus fréquent',
+      type: 'defi',
+      steps: [
+        {
+          kind: 'card',
+          title: 'Le problème',
+          body: [
+            'Le serveur du lycée note le **poste** (l\'ordinateur) utilisé à chaque connexion. Écrire `plus_frequent(L)` qui renvoie l\'élément qui apparaît **le plus souvent** dans la liste `L` (jamais vide).',
+            'Méthode en deux temps : d\'abord **compter** chaque élément avec un dictionnaire (le schéma du compteur), puis chercher la clé qui a la **plus grande valeur** (le schéma du maximum).',
+          ],
+        },
+        {
+          kind: 'choice',
+          prompt: '**Comprendre.** Les connexions de la journée : `["PC2", "PC1", "PC2", "PC3", "PC2", "PC1"]`. Combien de fois apparaît chaque poste, et lequel est le plus fréquent ?',
+          options: [
+            'PC1 : 2, PC2 : 3, PC3 : 1, donc PC2',
+            'PC1 : 2, PC2 : 3, PC3 : 1, donc PC3',
+            'PC1 : 3, PC2 : 2, PC3 : 1, donc PC1',
+            'PC1 : 2, PC2 : 2, PC3 : 2, donc PC1',
+          ],
+          answer: 0,
+          explain: 'PC2 apparaît 3 fois (positions 0, 2 et 4), PC1 2 fois et PC3 une fois. Le dictionnaire des comptes est `{\'PC2\': 3, \'PC1\': 2, \'PC3\': 1}` : la plus grande valeur, 3, est celle de PC2.',
+        },
+        {
+          kind: 'order',
+          prompt: '**Découper.** Remettez les étapes dans l\'ordre. Une étape est en trop.',
+          mode: 'text',
+          lines: [
+            'Créer un dictionnaire vide : compte = {}',
+            'Pour chaque x de L : si x est déjà une clé, ajouter 1, sinon créer la clé avec 1',
+            'Retenir un premier candidat : meilleur = L[0]',
+            'Pour chaque clé k : si compte[k] > compte[meilleur], meilleur devient k',
+            'Renvoyer meilleur',
+          ],
+          distractors: ['Renvoyer compte[meilleur]'],
+          explain: '`compte[meilleur]` est le **nombre** de connexions (3), pas le poste. On renvoie la clé `meilleur` (PC2). Partir de `L[0]` garantit que `meilleur` est bien une clé du dictionnaire.',
+        },
+        {
+          kind: 'code',
+          prompt: '**Coder.** Écrivez la fonction `plus_frequent(L)`. La liste n\'est jamais vide.',
+          starter: 'def plus_frequent(L):\n    compte = {}\n    # 1. compter chaque élément\n\n    # 2. chercher la clé qui a la plus grande valeur\n    ',
+          tests: [
+            { call: 'plus_frequent(["PC2", "PC1", "PC2", "PC3", "PC2", "PC1"])', expected: "'PC2'" },
+            { call: 'plus_frequent([22, 80, 443, 80])', expected: '80' },
+            { call: 'plus_frequent(["A3", "B12", "B12", "C7", "C7", "C7"])', expected: "'C7'" },
+            { call: 'plus_frequent(["B12"])', expected: "'B12'" },
+          ],
+          solution: 'def plus_frequent(L):\n    compte = {}\n    for x in L:\n        if x in compte:\n            compte[x] = compte[x] + 1\n        else:\n            compte[x] = 1\n    meilleur = L[0]\n    for k in compte:\n        if compte[k] > compte[meilleur]:\n            meilleur = k\n    return meilleur',
+          hints: [
+            'Partie 1 : recopiez le schéma du compteur de la leçon (`if x in compte:` … `else:` …).',
+            'Partie 2 : `meilleur = L[0]`, puis `for k in compte:` et `if compte[k] > compte[meilleur]:`.',
+            'À la fin : `return meilleur`, aligné avec les deux `for` (4 espaces).',
+          ],
+          explain: 'Deux boucles **l\'une après l\'autre** (pas l\'une dans l\'autre) : on compte tout, **puis** on cherche le maximum. Le test avec `[22, 80, 443, 80]` vérifie qu\'on ne renvoie pas simplement le premier élément.',
+        },
+      ],
+    },
+  ],
+};

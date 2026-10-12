@@ -1,0 +1,322 @@
+import type { Unit } from '../types';
+
+// Polybius square: line number, then the 5 letters of the line (I and J share a cell).
+const POLYBE = [
+  ['1', 'A', 'B', 'C', 'D', 'E'],
+  ['2', 'F', 'G', 'H', 'I/J', 'K'],
+  ['3', 'L', 'M', 'N', 'O', 'P'],
+  ['4', 'Q', 'R', 'S', 'T', 'U'],
+  ['5', 'V', 'W', 'X', 'Y', 'Z'],
+];
+const POLYBE_COLONNES = ['', '1', '2', '3', '4', '5'];
+
+export const securite: Unit = {
+  id: 'securite',
+  title: 'Sécurité et chiffrement',
+  subtitle: 'César, Polybe, clés, HTTPS',
+  chapter: 'Chapitre 9',
+  lessons: [
+    {
+      id: 'securite-1',
+      title: 'Clés et HTTPS',
+      steps: [
+        {
+          kind: 'card',
+          title: 'Pourquoi chiffrer ?',
+          body: [
+            'Sur Internet, un message passe par de nombreuses machines (box, routeurs…). Chacune pourrait le lire.',
+            '**Chiffrer** un message, c\'est le transformer pour le rendre illisible. Seule une personne qui a la **clé** peut le **déchiffrer**, c\'est-à-dire retrouver le message de départ.',
+            'Vocabulaire : le message lisible est le message **clair**. Le message transformé est le message **chiffré**.',
+          ],
+          tip: 'On dit « chiffrer » et « déchiffrer », et non « crypter ».',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Nadia transforme `RDV SALLE B12` en `UGY VDOOH E12` avant de l\'envoyer à Karim. Comment s\'appelle `UGY VDOOH E12` ?',
+          options: ['Le message clair', 'Le message chiffré', 'La clé', 'Le mot de passe'],
+          answer: 1,
+          explain: '`RDV SALLE B12` est lisible : c\'est le message clair. `UGY VDOOH E12` est le message chiffré. Ici, la clé est 3 : chaque lettre a été décalée de 3 rangs dans l\'alphabet.',
+        },
+        {
+          kind: 'card',
+          title: 'Le chiffrement symétrique',
+          body: [
+            'Dans un chiffrement **symétrique**, la **même clé** sert à chiffrer et à déchiffrer. Nadia et Karim doivent tous les deux la connaître, et la garder secrète.',
+            'Exemples : le chiffre de César (très simple, pour apprendre) et **AES**, utilisé partout aujourd\'hui. AES est **rapide** et très sûr.',
+            'Le problème : comment Nadia donne-t-elle la clé à Karim ? Si elle l\'envoie par Internet, un espion peut la lire… et ensuite tout déchiffrer.',
+          ],
+        },
+        {
+          kind: 'choice',
+          prompt: 'Chiffrement symétrique : Nadia chiffre son message avec la clé K. Avec quelle clé Karim le déchiffre-t-il ?',
+          options: ['La même clé K', 'Une autre clé, choisie par Karim', 'Aucune clé : il suffit de lire le message à l\'envers', 'Une clé tirée au hasard'],
+          answer: 0,
+          explain: '**Symétrique** veut dire « pareil des deux côtés » : la même clé chiffre et déchiffre. C\'est pourquoi il faut partager cette clé en secret.',
+        },
+        {
+          kind: 'card',
+          title: 'Le chiffrement asymétrique',
+          body: [
+            'Dans un chiffrement **asymétrique**, chaque personne a **deux clés** liées entre elles : une **clé publique** et une **clé privée**.',
+            'La clé publique est donnée à tout le monde : elle sert à **chiffrer**. La clé privée reste secrète : elle seule peut **déchiffrer** ce qui a été chiffré avec la clé publique.',
+            'Image : Karim distribue des cadenas ouverts (sa clé publique). Tout le monde peut fermer une boîte avec, mais seul Karim a la clé qui les ouvre (sa clé privée). Exemple : **RSA**. Inconvénient : c\'est beaucoup plus **lent** que le symétrique.',
+          ],
+        },
+        {
+          kind: 'choice',
+          prompt: 'Nadia veut envoyer un message secret à Karim avec un chiffrement asymétrique. Avec quelle clé doit-elle le chiffrer ?',
+          options: ['La clé privée de Nadia', 'La clé publique de Nadia', 'La clé publique de Karim', 'La clé privée de Karim'],
+          answer: 2,
+          explain: 'Elle utilise la clé **publique de Karim** : tout le monde la connaît. Seul Karim pourra déchiffrer, avec sa clé **privée**. Nadia n\'a jamais la clé privée de Karim.',
+        },
+        {
+          kind: 'table',
+          prompt: 'Pour chaque méthode, écrivez **S** si elle est symétrique ou **A** si elle est asymétrique (en majuscule). Puis le nombre de clés pour un échange : 1 (la même clé des deux côtés) ou 2 (une publique et une privée).',
+          columns: ['type', 'clés'],
+          rows: ['César', 'AES', 'RSA'],
+          answer: [
+            ['=S', '=1'],
+            ['S', '1'],
+            ['A', '2'],
+          ],
+          explain: 'César et AES sont symétriques : une seule clé, partagée en secret. RSA est asymétrique : la clé publique chiffre, la clé privée déchiffre.',
+        },
+        {
+          kind: 'card',
+          title: 'HTTPS : les deux à la fois',
+          body: [
+            '**HTTPS**, c\'est HTTP (le protocole du Web) sécurisé par **TLS**. TLS est un protocole qui chiffre les échanges entre le navigateur et le serveur. Il combine les deux chiffrements.',
+            'L\'asymétrique est lent, mais il règle le partage de la clé. Le symétrique est rapide. Donc on utilise l\'asymétrique **une seule fois**, pour envoyer en secret une clé symétrique : la **clé de session**.',
+            'Au début, le serveur envoie son **certificat** : une sorte de carte d\'identité numérique, qui contient sa clé publique. Ensuite, tout l\'échange est chiffré en symétrique, avec la clé de session.',
+          ],
+        },
+        {
+          kind: 'order',
+          prompt: 'Remettez dans l\'ordre le début d\'une connexion HTTPS. Une étape est en trop.',
+          mode: 'text',
+          lines: [
+            'Le navigateur demande une connexion sécurisée au serveur',
+            'Le serveur envoie son certificat, avec sa clé publique',
+            'Le navigateur vérifie le certificat',
+            'Le navigateur crée une clé de session et l\'envoie, chiffrée avec la clé publique du serveur',
+            'Le serveur déchiffre la clé de session avec sa clé privée',
+            'Les pages sont échangées, chiffrées en symétrique avec la clé de session',
+          ],
+          distractors: ['Le serveur envoie sa clé privée au navigateur'],
+          explain: 'La clé privée ne quitte **jamais** le serveur. Grâce à elle, seul le vrai serveur peut lire la clé de session. Ensuite, le chiffrement symétrique, rapide, prend le relais.',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Le certificat d\'un site est signé par une **autorité de certification** : un organisme de confiance, connu de votre navigateur. À quoi sert ce certificat ?',
+          options: [
+            'À accélérer le chargement des pages',
+            'À prouver que la clé publique appartient vraiment à ce site',
+            'À donner la clé privée du serveur au navigateur',
+            'À remplacer le mot de passe de l\'utilisateur',
+          ],
+          answer: 1,
+          explain: 'Sans certificat, un pirate pourrait se faire passer pour un site (par exemple l\'ENT du lycée) et donner **sa** clé publique. L\'autorité de certification garantit : « cette clé publique est bien celle de ce site ». Le cadenas du navigateur indique que tout a été vérifié.',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Pourquoi HTTPS n\'utilise-t-il pas le chiffrement asymétrique pour **tout** l\'échange ?',
+          options: [
+            'Parce que l\'asymétrique est beaucoup plus lent que le symétrique',
+            'Parce que l\'asymétrique n\'est pas sûr',
+            'Parce que le serveur n\'a pas de clé privée',
+            'Parce que le navigateur ne connaît pas la clé publique du serveur',
+          ],
+          answer: 0,
+          explain: 'L\'asymétrique sert seulement au début, pour partager la clé de session. Le symétrique (par exemple AES) est bien plus rapide pour chiffrer toutes les pages.',
+        },
+      ],
+    },
+    {
+      id: 'securite-2',
+      title: 'César et Polybe',
+      steps: [
+        {
+          kind: 'card',
+          title: 'Le chiffre de César',
+          body: [
+            'Jules César chiffrait ses messages en **décalant** chaque lettre de k rangs dans l\'alphabet. Le nombre k est la **clé**.',
+            'Avec k = 3 : A devient D, B devient E… Arrivé à Z, on repart au début de l\'alphabet : X devient A, Y devient B, Z devient C.',
+            'Pour **déchiffrer**, on décale dans l\'autre sens : on recule de k rangs.',
+          ],
+          figure: {
+            kind: 'table',
+            title: 'César, k = 3',
+            columns: ['clair', 'chiffré'],
+            rows: [
+              ['A', 'D'],
+              ['B', 'E'],
+              ['C', 'F'],
+              ['…', '…'],
+              ['W', 'Z'],
+              ['X', 'A'],
+              ['Y', 'B'],
+              ['Z', 'C'],
+            ],
+          },
+        },
+        {
+          kind: 'table',
+          prompt: 'Chiffrez le mot `TAXI` avec la clé k = 1, puis avec la clé k = 3. Écrivez les lettres en majuscules. L\'alphabet : `ABCDEFGHIJKLMNOPQRSTUVWXYZ`.',
+          columns: ['k = 1', 'k = 3'],
+          rows: ['T', 'A', 'X', 'I'],
+          answer: [
+            ['=U', 'W'],
+            ['B', 'D'],
+            ['Y', 'A'],
+            ['J', 'L'],
+          ],
+          explain: '`TAXI` devient `UBYJ` avec k = 1, et `WDAL` avec k = 3. Pour X avec k = 3 : Y, Z, puis on repart à A.',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Le message `FRGH` a été chiffré avec César, k = 3. Quel est le message clair ?',
+          options: ['IUJK', 'BNCD', 'CODE', 'FRGH'],
+          answer: 2,
+          explain: 'Pour déchiffrer, on **recule** de 3 rangs : F → C, R → O, G → D, H → E. Le message est `CODE`. `IUJK`, c\'est ce qu\'on obtient en avançant au lieu de reculer.',
+        },
+        {
+          kind: 'card',
+          title: 'César en Python',
+          body: [
+            'On range l\'alphabet dans une chaîne `ALPHABET`. `ALPHABET.index(lettre)` renvoie le **rang** de la lettre : 0 pour A, 1 pour B… 25 pour Z.',
+            'Le nouveau rang est `rang + 3`. Mais il ne doit pas dépasser 25 : on prend le **reste** de la division par 26, avec `%`. Par exemple, `26 % 26` vaut 0 et `27 % 26` vaut 1 : on repart au début.',
+            '`ALPHABET[nouveau]` donne la lettre qui a ce rang.',
+          ],
+          code: 'ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"\nlettre = "X"\nrang = ALPHABET.index(lettre)\nnouveau = (rang + 3) % 26\nprint(rang, nouveau, ALPHABET[nouveau])',
+          output: '23 0 A',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Qu\'affiche ce programme ?',
+          code: 'ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"\nrang = ALPHABET.index("W")\nprint(ALPHABET[(rang + 5) % 26])',
+          options: ['A', 'B', 'C', 'Erreur'],
+          answer: 1,
+          mono: true,
+          explain: 'W a le rang 22. 22 + 5 = 27, et `27 % 26` vaut 1 : c\'est la lettre B (W → X, Y, Z, A, B). Sans `% 26`, `ALPHABET[27]` provoquerait une erreur : l\'indice 27 n\'existe pas.',
+        },
+        {
+          kind: 'fill',
+          prompt: 'Complétez la fonction `chiffrer_lettre(lettre, k)`, qui renvoie la lettre majuscule décalée de `k` rangs.',
+          code: 'ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"\n\ndef chiffrer_lettre(lettre, k):\n    rang = ALPHABET.{{index}}(lettre)\n    return ALPHABET[(rang + {{k}}) {{%}} 26]',
+          distractors: ['append', '3', '//', 'lettre'],
+          tests: [
+            { call: 'chiffrer_lettre("N", 3)', expected: "'Q'" },
+            { call: 'chiffrer_lettre("Z", 1)', expected: "'A'" },
+            { call: 'chiffrer_lettre("B", 25)', expected: "'A'" },
+          ],
+          explain: '`index` donne le rang de la lettre. On ajoute la clé `k` (pas toujours 3 !), puis `% 26` fait revenir au début de l\'alphabet après Z.',
+        },
+        {
+          kind: 'card',
+          title: 'Le carré de Polybe',
+          body: [
+            'Le **carré de Polybe** range 25 lettres dans une grille de 5 lignes et 5 colonnes. I et J partagent la même case, car l\'alphabet a 26 lettres.',
+            'Chaque lettre est codée par **deux chiffres** : le numéro de sa **ligne**, puis le numéro de sa **colonne**.',
+            'Exemple : N est ligne 3, colonne 3, son code est 33. S est ligne 4, colonne 3 : 43. I est ligne 2, colonne 4 : 24. Donc `NSI` devient `33 43 24`.',
+          ],
+          figure: { kind: 'table', title: 'Carré de Polybe', columns: POLYBE_COLONNES, rows: POLYBE, caption: 'Numéro de ligne à gauche, numéro de colonne en haut.' },
+        },
+        {
+          kind: 'table',
+          prompt: 'Codez le mot `PYTHON` avec le carré de Polybe : le numéro de ligne, puis le numéro de colonne.',
+          figure: { kind: 'table', title: 'Carré de Polybe', columns: POLYBE_COLONNES, rows: POLYBE },
+          columns: ['code'],
+          rows: ['P', 'Y', 'T', 'H', 'O', 'N'],
+          answer: [['=35'], ['54'], ['44'], ['23'], ['34'], ['33']],
+          explain: 'P est ligne 3, colonne 5 : 35. Y : 54. T : 44. H : 23. O : 34. N : 33. `PYTHON` devient `35 54 44 23 34 33`.',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Décodez le message `13 34 14 15` avec le carré de Polybe.',
+          figure: { kind: 'table', title: 'Carré de Polybe', columns: POLYBE_COLONNES, rows: POLYBE },
+          options: ['LSQV', 'CODE', 'CPDE', 'DODE'],
+          answer: 1,
+          explain: 'Le premier chiffre est la ligne, le second la colonne. 13 : ligne 1, colonne 3, c\'est C. Puis 34 : O, 14 : D, 15 : E. En inversant ligne et colonne, on obtiendrait `LSQV`.',
+        },
+        {
+          kind: 'card',
+          title: 'Polybe en Python',
+          body: [
+            'On écrit la grille comme une liste de 5 chaînes. `GRILLE[i][j]` est la lettre de la ligne `i` et de la colonne `j` (indices de 0 à 4).',
+            'On construit un **dictionnaire** `code` : la clé est la lettre, la valeur est son code. Les indices commencent à 0 : la ligne numéro `i + 1` et la colonne numéro `j + 1` donnent le code `10 * (i + 1) + (j + 1)`.',
+            'J n\'est pas dans la grille : on lui donne le code de I.',
+          ],
+          code: 'GRILLE = ["ABCDE", "FGHIK", "LMNOP", "QRSTU", "VWXYZ"]\ncode = {}\nfor i in range(5):\n    for j in range(5):\n        code[GRILLE[i][j]] = 10 * (i + 1) + (j + 1)\ncode["J"] = code["I"]\nprint(code["N"], code["S"], code["J"])',
+          output: '33 43 24',
+        },
+        {
+          kind: 'fill',
+          prompt: 'Complétez `polybe(mot)`, qui renvoie la liste des codes des lettres du mot.',
+          code: 'GRILLE = ["ABCDE", "FGHIK", "LMNOP", "QRSTU", "VWXYZ"]\ncode = {}\nfor i in range(5):\n    for j in range(5):\n        code[GRILLE[i][j]] = 10 * (i + 1) + (j + 1)\n\ndef polybe(mot):\n    res = {{[]}}\n    for lettre in {{mot}}:\n        res.append({{code[lettre]}})\n    return res',
+          distractors: ['{}', 'code', 'lettre', 'GRILLE'],
+          tests: [
+            { call: 'polybe("NSI")', expected: '[33, 43, 24]' },
+            { call: 'polybe("CODE")', expected: '[13, 34, 14, 15]' },
+          ],
+          explain: 'On part d\'une liste vide, on parcourt les lettres du mot, et on ajoute le code de chacune, lu dans le dictionnaire : `code[lettre]`.',
+        },
+      ],
+    },
+    {
+      id: 'securite-defi',
+      title: 'Défi : chiffrer avec César',
+      type: 'defi',
+      steps: [
+        {
+          kind: 'card',
+          title: 'Le problème',
+          body: [
+            'Écrire `chiffrer_cesar(texte, cle)` qui renvoie le texte chiffré avec César : chaque lettre **majuscule** est décalée de `cle` rangs, en repartant à A après Z.',
+            'Les autres caractères (espaces, chiffres, ponctuation) restent **inchangés**. Exemple : `chiffrer_cesar("NSI", 3)` renvoie `\'QVL\'`.',
+          ],
+        },
+        {
+          kind: 'choice',
+          prompt: '**Comprendre.** Que renvoie `chiffrer_cesar("WEB 2", 4)` ?',
+          options: ['\'SAX 2\'', '\'AIF\'', '\'AIF 2\'', '\'AIF 6\''],
+          answer: 2,
+          mono: true,
+          explain: 'W avance de 4 : X, Y, Z, A. E devient I et B devient F. L\'espace et le chiffre 2 ne sont pas des lettres majuscules : ils restent tels quels. `SAX 2`, c\'est en reculant au lieu d\'avancer.',
+        },
+        {
+          kind: 'order',
+          prompt: '**Découper.** Remettez les étapes dans l\'ordre. Une étape est en trop.',
+          mode: 'text',
+          lines: [
+            'Créer une chaîne vide res',
+            'Pour chaque caractère c du texte :',
+            'si c est dans ALPHABET, ajouter à res la lettre de rang (rang de c + cle) % 26',
+            'sinon, ajouter c à res sans le changer',
+            'Après la boucle, renvoyer res',
+          ],
+          distractors: ['sinon, ne rien ajouter à res'],
+          explain: 'Le `else` est important : sans lui, les espaces et les chiffres disparaîtraient du message. Le `return` est après la boucle.',
+        },
+        {
+          kind: 'code',
+          prompt: '**Coder.** Écrivez `chiffrer_cesar(texte, cle)`. La chaîne `ALPHABET` est donnée.',
+          starter: 'ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"\n\ndef chiffrer_cesar(texte, cle):\n    ',
+          tests: [
+            { call: 'chiffrer_cesar("NSI", 3)', expected: "'QVL'" },
+            { call: 'chiffrer_cesar("XYZ", 3)', expected: "'ABC'" },
+            { call: 'chiffrer_cesar("BAC NSI", 1)', expected: "'CBD OTJ'" },
+            { call: 'chiffrer_cesar("WEB 2", 4)', expected: "'AIF 2'" },
+            { call: 'chiffrer_cesar("QVL", 23)', expected: "'NSI'" },
+          ],
+          solution: 'ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"\n\ndef chiffrer_cesar(texte, cle):\n    res = ""\n    for c in texte:\n        if c in ALPHABET:\n            rang = ALPHABET.index(c)\n            res = res + ALPHABET[(rang + cle) % 26]\n        else:\n            res = res + c\n    return res',
+          hints: [
+            'Commencez par `res = ""`, puis `for c in texte:`.',
+            '`if c in ALPHABET:` : calculez `rang = ALPHABET.index(c)`, puis `res = res + ALPHABET[(rang + cle) % 26]`.',
+            'Dans le `else` : `res = res + c`. Et `return res` aligné avec le `for`.',
+          ],
+          explain: 'Le dernier test montre une astuce : décaler de 23, c\'est reculer de 3 (car 23 + 3 = 26). Chiffrer avec la clé 23 **déchiffre** un message chiffré avec la clé 3.',
+        },
+      ],
+    },
+  ],
+};

@@ -1,0 +1,155 @@
+import type { Unit } from '../types';
+
+export const u5: Unit = {
+  id: 'fonctions',
+  title: 'Les fonctions',
+  subtitle: 'def, paramètres, return',
+  lessons: [
+    {
+      id: 'fonctions-1',
+      title: 'Définir et appeler',
+      steps: [
+        {
+          kind: 'card',
+          title: 'Une fonction',
+          body: [
+            '`def nom(paramètres):` **définit** une fonction ; le bloc décalé est son corps. Définir ne lance rien.',
+            'La fonction s\'exécute quand on l\'**appelle** : `double(5)`. Le paramètre `x` reçoit alors la valeur 5.',
+            '`return` **renvoie** une valeur au programme qui a appelé la fonction, et **arrête** la fonction.',
+          ],
+          code: 'def double(x):\n    return x * 2\n\nprint(double(5))\nprint(double(10) + 1)',
+          output: '10\n21',
+        },
+        {
+          kind: 'demo',
+          title: 'Ce qui se passe lors d\'un appel',
+          body: 'Suivez l\'appel `aire(4, 3)` : Python saute dans la fonction, `longueur` reçoit 4 et `largeur` reçoit 3, puis la valeur renvoyée revient dans `a`.',
+          code: 'def aire(longueur, largeur):\n    return longueur * largeur\n\na = aire(4, 3)\nprint(a)',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Les paramètres reçoivent les valeurs **dans l\'ordre**. Qu\'affiche ce programme ?',
+          code: 'def place_libre(capacite, utilise):\n    return capacite - utilise\n\nprint(place_libre(20, 64))',
+          options: ['44', '-44', '84', 'Erreur'],
+          answer: 1,
+          mono: true,
+          explain: '`capacite` reçoit 20 et `utilise` reçoit 64 : 20 − 64 = −44. L\'ordre des valeurs compte.',
+        },
+        {
+          kind: 'card',
+          title: 'print ou return ?',
+          body: [
+            '`print` **affiche** à l\'écran, pour la personne qui regarde. `return` **rend** une valeur au programme, qui peut la ranger ou calculer avec.',
+            'Une fonction sans `return` renvoie `None`, qui veut dire « rien ».',
+            'Au bac, « écrire une fonction qui **renvoie** » veut toujours dire `return`.',
+          ],
+          code: 'def bonus_a(note):\n    return note + 2\n\ndef bonus_b(note):\n    print(note + 2)\n\nx = bonus_a(12)\ny = bonus_b(12)\nprint(x, y)',
+          output: '14\n14 None',
+        },
+        {
+          kind: 'choice',
+          prompt: 'Qu\'affiche ce programme ?',
+          code: 'def f(n):\n    print(n * 3)\n\nr = f(4)\nprint(r)',
+          options: ['12\nNone', '12\n12', 'None', '12'],
+          answer: 0,
+          mono: true,
+          explain: '`f(4)` **affiche** 12, mais ne renvoie rien (pas de `return`) : `r` reçoit `None`, et `print(r)` affiche `None`.',
+        },
+        {
+          kind: 'fill',
+          prompt: 'Complétez la fonction : elle doit **renvoyer** la durée totale en minutes. Exemple : `duree_minutes(2, 15)` renvoie 135.',
+          code: '{{def}} duree_minutes(heures, minutes):\n    {{return}} heures * 60 + minutes',
+          distractors: ['print', 'for', 'if'],
+          tests: [
+            { call: 'duree_minutes(2, 15)', expected: '135' },
+            { call: 'duree_minutes(0, 45)', expected: '45' },
+          ],
+          explain: '`def` commence la définition et `return` renvoie le résultat. Avec `print`, la fonction afficherait 135 mais renverrait `None`.',
+        },
+        {
+          kind: 'bug',
+          prompt: 'Ce programme s\'arrête sur une erreur à la ligne 4, mais la vraie faute est ailleurs. Touchez la ligne fautive.',
+          code: 'def carre(x):\n    print(x * x)\n\nresultat = carre(5) + 1\nprint(resultat)',
+          line: 2,
+          fixed: 'def carre(x):\n    return x * x\n\nresultat = carre(5) + 1\nprint(resultat)',
+          output: '26',
+          explain: '`carre` affiche 25 mais renvoie `None`, et `None + 1` est impossible. Il fallait `return x * x` à la ligne 2.',
+        },
+        {
+          kind: 'order',
+          prompt: 'Remettez dans l\'ordre la fonction `plus_grand(a, b)`, qui renvoie le plus grand des deux nombres. Une ligne est en trop.',
+          mode: 'code',
+          lines: ['def plus_grand(a, b):', '    if a > b:', '        return a', '    else:', '        return b'],
+          distractors: ['        print(a)'],
+          tests: [
+            { call: 'plus_grand(4, 9)', expected: '9' },
+            { call: 'plus_grand(7, 2)', expected: '7' },
+          ],
+          explain: 'Le décalage montre ce qui est **dans** la fonction (4 espaces) et ce qui est **dans** le `if` ou le `else` (8 espaces).',
+        },
+        {
+          kind: 'code',
+          prompt: 'Écrivez une fonction `moyenne2(a, b)` qui **renvoie** la moyenne des deux nombres. Exemple : `moyenne2(12, 15)` renvoie `13.5`.',
+          starter: 'def moyenne2(a, b):\n    ',
+          tests: [
+            { call: 'moyenne2(12, 15)', expected: '13.5' },
+            { call: 'moyenne2(10, 10)', expected: '10.0' },
+            { call: 'moyenne2(0, 7)', expected: '3.5' },
+          ],
+          solution: 'def moyenne2(a, b):\n    return (a + b) / 2',
+          hints: ['La moyenne de deux nombres : leur somme divisée par 2.', 'Attention aux priorités : `a + b / 2` divise seulement `b`. Il faut des parenthèses : `(a + b) / 2`.'],
+          explain: 'Sans parenthèses, Python fait la division **avant** l\'addition, comme en maths. `/` donne toujours un nombre à virgule : `10.0`.',
+        },
+      ],
+    },
+    {
+      id: 'fonctions-defi',
+      title: 'Défi : le plus grand de trois',
+      type: 'defi',
+      steps: [
+        {
+          kind: 'card',
+          title: 'Le problème',
+          body: [
+            'Écrire une fonction `max3(a, b, c)` qui renvoie le plus grand des trois nombres, **sans** utiliser `max`.',
+            'Idée : lire les nombres un par un en **retenant le plus grand vu jusqu\'ici**. C\'est la même idée qui servira pour le maximum d\'une liste.',
+          ],
+        },
+        {
+          kind: 'choice',
+          prompt: '**Comprendre.** On lit 3, puis 9, puis 5, en retenant à chaque fois le plus grand vu jusqu\'ici. Que retient-on à la fin ?',
+          options: ['3', '9', '5', '17'],
+          answer: 1,
+          explain: 'Après 3, on retient 3. Après 9, on retient 9 (plus grand). Après 5, on garde 9, car 5 n\'est pas plus grand.',
+        },
+        {
+          kind: 'order',
+          prompt: '**Découper.** Remettez les étapes dans l\'ordre. Une étape est en trop.',
+          mode: 'text',
+          lines: [
+            'Retenir a comme plus grand : m = a',
+            'Si b est plus grand que m, alors m devient b',
+            'Si c est plus grand que m, alors m devient c',
+            'Renvoyer m',
+          ],
+          distractors: ['Afficher m avec print'],
+          explain: 'La fonction doit **renvoyer** le résultat avec `return`, pas l\'afficher.',
+        },
+        {
+          kind: 'code',
+          prompt: '**Coder.** Écrivez la fonction `max3(a, b, c)`.',
+          starter: 'def max3(a, b, c):\n    m = a\n    ',
+          tests: [
+            { call: 'max3(2, 9, 5)', expected: '9' },
+            { call: 'max3(7, 1, 3)', expected: '7' },
+            { call: 'max3(4, 6, 8)', expected: '8' },
+            { call: 'max3(5, 5, 5)', expected: '5' },
+          ],
+          solution: 'def max3(a, b, c):\n    m = a\n    if b > m:\n        m = b\n    if c > m:\n        m = c\n    return m',
+          hints: ['Deux `if` l\'un après l\'autre (pas `elif`) : `if b > m:` puis `m = b` décalé.', 'Le `return m` est à la fin, décalé de 4 espaces seulement.'],
+          explain: 'Les deux tests sont **indépendants** : il faut regarder `b` **et** `c`. Avec `elif`, on ne testerait pas `c` quand `b` est plus grand que `a`.',
+        },
+      ],
+    },
+  ],
+};
