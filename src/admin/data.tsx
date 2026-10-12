@@ -128,3 +128,56 @@ export function downloadCsv(students: Student[]) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
+
+// ---------------------------------------------------------------- where is the student, what did they do
+
+type CourseLesson = (typeof LESSONS)[number];
+
+export type Position =
+  /** A lesson left in the middle (the most recent one). */
+  | { kind: 'current'; at: CourseLesson; pos: number; total: number; since: Date }
+  /** Nothing in progress: the lesson to do next. */
+  | { kind: 'next'; at: CourseLesson }
+  /** Every lesson is done. */
+  | { kind: 'finished' };
+
+/** Where the student is now. The next lesson is taken in the module they worked on last (the modules
+ * can be followed in any order, like the chapters in class), else the first lesson not done. */
+export function positionOf(s: Student): Position {
+  const p = s.progress;
+  let current: { id: string; pos: number; total: number; at: number } | null = null;
+  for (const [id, x] of Object.entries(p.inProgress)) if (!current || x.at > current.at) current = { id, ...x };
+  const cur = current ? LESSONS.find((l) => l.lesson.id === current!.id) : undefined;
+  if (current && cur) return { kind: 'current', at: cur, pos: current.pos, total: current.total, since: new Date(current.at) };
+
+  let lastId: string | null = null;
+  let lastAt = -1;
+  for (const [id, r] of Object.entries(p.done)) {
+    const t = finishedAt(r).getTime();
+    if (t > lastAt) {
+      lastAt = t;
+      lastId = id;
+    }
+  }
+  const lastModule = LESSONS.find((l) => l.lesson.id === lastId)?.module.id;
+  const next = LESSONS.find((l) => l.module.id === lastModule && !p.done[l.lesson.id]) ?? LESSONS.find((l) => !p.done[l.lesson.id]);
+  return next ? { kind: 'next', at: next } : { kind: 'finished' };
+}
+
+/** The last lesson finished, with its record. */
+export function lastFinished(s: Student) {
+  let best: { at: CourseLesson; date: Date; stars: number } | null = null;
+  for (const [id, r] of Object.entries(s.progress.done)) {
+    const l = LESSONS.find((x) => x.lesson.id === id);
+    const d = finishedAt(r);
+    if (l && (!best || d > best.date)) best = { at: l, date: d, stars: r.stars };
+  }
+  return best;
+}
+
+/** Number of lessons finished per day (YYYY-MM-DD). */
+export function finishedPerDay(s: Student): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const r of Object.values(s.progress.done)) m.set(r.date, (m.get(r.date) ?? 0) + 1);
+  return m;
+}

@@ -8,7 +8,8 @@ import { COURSE, LESSONS } from '@/content/course';
 import { api } from '@/state/api';
 import { useAuth } from '@/state/auth';
 
-import { ago, dateFmt, doneCount, downloadCsv, lastActive, streakNow, useAdminData, type Student } from './data';
+import { ago, dateFmt, doneCount, downloadCsv, lastActive, positionOf, streakNow, useAdminData, type Student } from './data';
+import { ActivityCalendar, ModuleBars, StudentFigures, studentLine, WhereNow } from './student-stats';
 import { BoHead } from './shell';
 
 type Sort = 'active' | 'done' | 'xp' | 'email';
@@ -76,6 +77,7 @@ export function StudentsPage() {
             <thead>
               <tr>
                 <th scope="col">Élève</th>
+                <th scope="col">Où en est-il</th>
                 <th scope="col">Leçons terminées</th>
                 <th scope="col">XP</th>
                 <th scope="col">Jours d'affilée</th>
@@ -92,6 +94,9 @@ export function StudentsPage() {
                       <Link to={`/admin/eleves/${s.id}`}>{s.email}</Link>
                       {s.isAdmin ? <span className="tag">admin</span> : null}
                     </th>
+                    <td className="st-where-cell">
+                      <Where s={s} />
+                    </td>
                     <td>
                       <span className="admin-done">
                         <ProgressBar value={n / LESSONS.length} label={`${n} leçons sur ${LESSONS.length}`} />
@@ -112,6 +117,18 @@ export function StudentsPage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Short version of "Où en est-il ?", for the list. */
+function Where({ s }: { s: Student }) {
+  const pos = positionOf(s);
+  if (pos.kind === 'finished') return <span className="muted">parcours terminé</span>;
+  return (
+    <span className="st-where-short">
+      <span className={pos.kind === 'current' ? 'is-current' : undefined}>{pos.at.lesson.title}</span>
+      <span className="muted small">{pos.kind === 'current' ? `en cours, étape ${pos.pos + 1} sur ${pos.total}` : doneCount(s.progress) === 0 ? 'pas encore commencé' : 'prochaine leçon'}</span>
+    </span>
   );
 }
 
@@ -139,39 +156,21 @@ export function StudentPage() {
 
 function StudentDetail({ s }: { s: Student }) {
   const p = s.progress;
-  const n = doneCount(p);
   return (
     <>
-      <BoHead
-        title={s.email}
-        sub={
-          <>
-            Inscrit le {dateFmt.format(new Date(s.createdAt))}. Dernière activité : {ago(lastActive(s))}.{p.freeAccess ? ' Mode libre activé.' : ''}
-          </>
-        }
-      />
+      <BoHead title={s.email} sub={studentLine(s)} />
 
-      <dl className="bo-kpis">
-        <div>
-          <dt>Leçons terminées</dt>
-          <dd>
-            {n} <small>sur {LESSONS.length}</small>
-          </dd>
-        </div>
-        <div>
-          <dt>XP</dt>
-          <dd>{p.xp}</dd>
-        </div>
-        <div>
-          <dt>Jours d'affilée</dt>
-          <dd>{streakNow(p)}</dd>
-        </div>
-        <div>
-          <dt>Leçons en cours</dt>
-          <dd>{Object.keys(p.inProgress).length}</dd>
-        </div>
-      </dl>
+      <div className="st-top">
+        <WhereNow s={s} />
+        <StudentFigures s={s} />
+      </div>
 
+      <div className="st-grid">
+        <ActivityCalendar s={s} />
+        <ModuleBars s={s} />
+      </div>
+
+      <h2 className="st-section">Détail leçon par leçon</h2>
       {COURSE.map((m) => (
         <section key={m.id} className="admin-module">
           <h2>{m.title}</h2>

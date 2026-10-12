@@ -327,3 +327,278 @@
 .bo .admin-module h2 {
   color: var(--ink);
 }
+
+/* ---------- the page of one student ---------- */
+
+.st-top,
+.st-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 1000px) {
+  .st-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
+
+  .st-grid {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+}
+
+.st-top .bo-kpis {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.st-stars-split {
+  order: -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  color: var(--muted);
+}
+
+.st-stars-split > span {
+  white-space: nowrap;
+}
+
+.st-section {
+  font-size: var(--t-lg);
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+/* where now */
+.st-where {
+  border-left: 4px solid var(--marge);
+}
+
+.st-where-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.st-where-kind {
+  align-self: flex-start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: var(--t-xs);
+  font-weight: 800;
+  background: var(--encre-soft);
+  color: var(--encre);
+}
+
+.st-where-kind.is-current {
+  background: var(--marge-soft);
+  color: var(--marge-deep);
+}
+
+.st-where-kind.is-done {
+  background: var(--ok-soft);
+  color: var(--ok-deep);
+}
+
+.st-where-title {
+  font-size: var(--t-xl);
+  font-weight: 900;
+  font-variation-settings: var(--hand);
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.st-where-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 360px;
+  margin: 4px 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.st-where-last {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.st-where-last strong {
+  color: var(--ink);
+}
+
+/* list: short "où en est-il" */
+.st-where-cell {
+  white-space: normal !important;
+  min-width: 200px;
+}
+
+.st-where-short {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.st-where-short .is-current {
+  color: var(--marge-deep);
+  font-weight: 700;
+}
+
+/* activity calendar */
+.st-cal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.st-cal {
+  position: relative;
+  overflow-x: auto;
+  padding-top: 4px;
+}
+
+.st-cal-grid {
+  display: flex;
+  gap: 3px;
+}
+
+.st-cal-week,
+.st-cal-days {
+  display: grid;
+  grid-template-rows: 16px repeat(7, 15px);
+  gap: 3px;
+}
+
+.st-cal-days span {
+  width: 14px;
+  font-size: 10px;
+  line-height: 15px;
+  color: var(--muted);
+}
+
+.st-cal-month {
+  font-size: 10px;
+  line-height: 16px;
+  color: var(--muted);
+  white-space: nowrap;
+  width: 15px;
+  overflow: visible;
+}
+
+.st-cal-cell {
+  display: block;
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  background: #eef2f6;
+  box-shadow: inset 0 0 0 1px #00000008;
+}
+
+.st-cal-cell.is-before:not(.has-value) {
+  background: #f7f9fb;
+  box-shadow: inset 0 0 0 1px #00000006;
+}
+
+.st-cal-cell.is-future {
+  background: none;
+  box-shadow: none;
+}
+
+.st-cal-cell[tabindex]:hover,
+.st-cal-cell[tabindex]:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.st-tip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 8px));
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  font-size: var(--t-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 6px 18px -6px #0006;
+}
+
+.st-tip span {
+  color: #c9d4e0;
+}
+
+.st-cal-legend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.st-cal-legend .muted:first-child {
+  margin-right: 4px;
+}
+
+.st-cal-legend .muted:last-child {
+  margin-left: 4px;
+}
+
+/* modules */
+.st-modules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.st-modules li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 12px;
+  align-items: center;
+}
+
+.st-mod-name {
+  grid-row: 1;
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--t-sm);
+  font-weight: 650;
+}
+
+.st-mod-value {
+  grid-row: 1;
+  grid-column: 2;
+  font-size: var(--t-sm);
+  font-weight: 750;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.st-mod-bar {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  height: 8px;
+  border-radius: 4px;
+  background: #eef2f6;
+  overflow: hidden;
+}
+
+.st-mod-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--encre);
+}
