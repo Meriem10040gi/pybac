@@ -1,6 +1,7 @@
 import '@fontsource-variable/recursive/full.css';
 import './styles/base.css';
 import './styles/layout.css';
+import './styles/sidebar.css';
 import './styles/components.css';
 import './styles/lesson.css';
 import './styles/account.css';

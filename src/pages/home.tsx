@@ -1,6 +1,7 @@
 // Home: the lesson to do now (with a bit of its code), then the course as the contents page of a
 // notebook: modules, and their units with the progress.
-import { Link, useNavigate } from 'react-router';
+import { useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 
 import { HighlightedLine } from '@/components/highlight';
 import { PythonStatus } from '@/components/python-status';
@@ -27,6 +28,11 @@ export function Home() {
   const progress = useProgress();
   const py = usePython();
   const navigate = useNavigate();
+  const { hash } = useLocation();
+  // a module chosen in the menu (/#module-…): go to it
+  useEffect(() => {
+    if (hash.startsWith('#module-')) document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [hash]);
   // a lesson left in the middle comes first; otherwise the first lesson not done yet
   const current = progress.current();
   const next = current ?? progress.next();
@@ -80,7 +86,7 @@ export function Home() {
           </p>
         </header>
         {COURSE.map((m) => (
-          <section key={m.id} className="toc-module">
+          <section key={m.id} id={`module-${m.id}`} className="toc-module">
             <h3>{m.title}</h3>
             <p className="toc-module-sub">{m.subtitle}</p>
             <ol className="toc-units">

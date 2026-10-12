@@ -21,7 +21,7 @@ export async function api<T>(path: string, init?: { method?: string; body?: unkn
       credentials: 'same-origin',
     });
   } catch {
-    throw new ApiError(0, 'Pas de connexion au serveur. Vérifiez internet.');
+    throw new ApiError(0, 'Impossible de joindre le serveur. Vérifiez la connexion internet, puis réessayez dans un moment.');
   }
   const json = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(res.status, json?.error ?? (res.status >= 500 ? 'Le serveur ne répond pas. Réessayez dans un moment.' : 'Le serveur a rencontré un problème.'));

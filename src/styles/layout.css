@@ -197,11 +197,13 @@
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    gap: 22px;
-    padding: 24px 20px;
-    background: var(--encre);
+    gap: 14px;
+    padding: 20px 16px 12px;
+    background: linear-gradient(180deg, #1f4b73 0%, #183d5e 100%);
     color: #fff;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff33 transparent;
   }
 
   .topbar,
@@ -215,57 +217,7 @@
   }
 }
 
-.sidebar-stats {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--r-md);
-  font-weight: 700;
-  color: #dbe6f2;
-  border-left: 4px solid transparent;
-}
-
-.sidebar-link:hover {
-  background: #ffffff14;
-  color: #fff;
-}
-
-.sidebar-link.active {
-  background: #ffffff1f;
-  color: #fff;
-  border-left-color: var(--gold);
-}
-
-.sidebar-foot {
-  margin-top: auto;
-  padding-top: 18px;
-  border-top: 1px solid #ffffff26;
-}
-
-.sidebar .settings {
-  --switch-off: #ffffff40;
-}
-
-.sidebar .link-button {
-  color: #dbe6f2;
-}
-
-.sidebar :focus-visible {
-  outline-color: var(--gold);
-}
+/* the menu itself: src/styles/sidebar.css */
 
 /* ---------- settings ---------- */
 

@@ -117,9 +117,9 @@
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    gap: 26px;
-    padding: 24px 18px;
-    background: var(--ink);
+    gap: 16px;
+    padding: 22px 16px 14px;
+    background: linear-gradient(180deg, #1b2733 0%, #141d27 100%);
     color: #fff;
     overflow-y: auto;
   }
@@ -140,55 +140,12 @@
   font-weight: 750;
 }
 
-.bo-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.bo-side {
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff33 transparent;
 }
 
-.bo-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--r-md);
-  font-weight: 700;
-  color: #c9d4e0;
-  border-left: 4px solid transparent;
-}
-
-.bo-link:hover {
-  background: #ffffff12;
-  color: #fff;
-}
-
-.bo-link.active {
-  background: #ffffff1c;
-  color: #fff;
-  border-left-color: var(--gold);
-}
-
-.bo-foot {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 18px;
-  border-top: 1px solid #ffffff26;
-}
-
-.bo-foot .account-email {
-  margin-top: 6px;
-}
-
-.bo-foot .link-button,
-.bo-side :focus-visible {
-  color: #c9d4e0;
-}
-
-.bo-return {
-  margin-bottom: 4px;
-}
+/* links, profile and footer of the menu: src/styles/sidebar.css */
 
 /* ---------- cards and figures ---------- */
 

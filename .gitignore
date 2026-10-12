@@ -12,3 +12,7 @@ dev-dist/
 
 # local tools
 .claude/
+
+# editors
+.idea/
+.vscode/
