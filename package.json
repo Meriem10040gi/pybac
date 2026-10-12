@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
     "dev:web": "vite",
-    "dev:api": "node --env-file-if-exists=.env --watch server/index.ts --port=3000",
+    "dev:api": "tsx watch --env-file-if-exists=.env server/index.ts --port=3000",
     "build": "tsc -b && vite build",
-    "start": "node --env-file-if-exists=.env server/index.ts",
+    "start": "tsx --env-file-if-exists=.env server/index.ts",
     "typecheck": "tsc -b",
     "verify": "tsx scripts/verify-content.ts",
-    "admin": "node --env-file-if-exists=.env scripts/admin.ts"
+    "admin": "tsx --env-file-if-exists=.env scripts/admin.ts"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",
@@ -27,7 +27,8 @@
     "mysql2": "^3.24.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-router": "^8.4.0"
+    "react-router": "^8.4.0",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
@@ -37,7 +38,6 @@
     "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^10.0.6",
     "pyodide": "^314.0.7",
-    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vite-plugin-pwa": "^2.0.0"

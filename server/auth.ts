@@ -27,7 +27,11 @@ export async function checkPassword(password: string, stored: string): Promise<b
 }
 
 /** A hash to compare with when the email is unknown, so that the answer takes the same time. */
-export const DUMMY_HASH = await hashPassword(randomBytes(16).toString('hex'));
+let dummy: Promise<string> | null = null;
+export function dummyHash() {
+  dummy ??= hashPassword(randomBytes(16).toString('hex'));
+  return dummy;
+}
 
 export const SESSION_COOKIE = 'pybac_session';
 export const SESSION_DAYS = 180;

@@ -1,41 +1,18 @@
-// Starts the server. Settings come from the environment (the .env file in development, the
-// settings of the host in production): see .env.example.
-import path from 'node:path';
+// Starts the Node server: the API, and in production the built site (dist/).
+// Used on your computer (npm run dev, npm start) and on hosts like Render. On Vercel, the API runs
+// as a function instead (api/index.ts).
 import { parseArgs } from 'node:util';
-import { fileURLToPath } from 'node:url';
 
-import { createApp } from './app.ts';
-import { memoryStore, mysqlStore, type Store } from './store.ts';
+import { createApp } from './app.js';
+import { configFromEnv } from './config.js';
 
-const production = process.env.NODE_ENV === 'production';
-const url = process.env.DATABASE_URL?.trim();
-
-let store: Store;
-if (url) {
-  store = await mysqlStore(url);
-  console.log('[db] MySQL connectée');
-} else if (production) {
-  console.error('[db] DATABASE_URL manque : le serveur ne démarre pas sans base de données en production.');
+let app;
+try {
+  app = createApp(await configFromEnv());
+} catch (e) {
+  console.error(e instanceof Error ? e.message : e);
   process.exit(1);
-} else {
-  store = memoryStore();
-  console.warn('[db] pas de DATABASE_URL : comptes et progression gardés en mémoire (effacés à l\'arrêt du serveur)');
 }
-
-const admins = new Set(
-  (process.env.ADMIN_EMAILS ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean),
-);
-
-const app = createApp({
-  store,
-  admins,
-  signupCode: process.env.SIGNUP_CODE?.trim() || null,
-  distDir: path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist'),
-  secureCookie: production,
-});
 
 // --port (development: always 3000, the port the site forwards /api to), else PORT (given by the host)
 const { values: args } = parseArgs({ options: { port: { type: 'string' } } });

@@ -15,9 +15,9 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { EMPTY, merge, normalize } from '../src/state/merge.ts';
-import { checkPassword, DUMMY_HASH, hashPassword, limiter, newToken, normEmail, passwordProblem, SESSION_COOKIE, SESSION_DAYS, tokenHash } from './auth.ts';
-import type { Store, User } from './store.ts';
+import { EMPTY, merge, normalize } from '../src/state/merge.js';
+import { checkPassword, dummyHash, hashPassword, limiter, newToken, normEmail, passwordProblem, SESSION_COOKIE, SESSION_DAYS, tokenHash } from './auth.js';
+import type { Store, User } from './store.js';
 
 export type Config = {
   store: Store;
@@ -121,7 +121,7 @@ export function createApp(cfg: Config) {
     if (!loginLimit(`${req.ip}|${email}`)) return void res.status(429).json({ error: 'Trop d\'essais. Réessayez dans 15 minutes.' });
     const user = email ? await store.userByEmail(email) : null;
     // same work whether the account exists or not
-    const ok = await checkPassword(password, user?.passwordHash ?? DUMMY_HASH);
+    const ok = await checkPassword(password, user?.passwordHash ?? (await dummyHash()));
     if (!user || !ok) return void res.status(401).json({ error: 'E-mail ou mot de passe incorrect.' });
     await setSession(res, user.id);
     res.json({ user: publicUser(user, admins) });

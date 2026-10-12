@@ -48,15 +48,33 @@ Puis ouvrir http://localhost:5173. `npm run dev` démarre le site et le serveur 
 
 ## Mettre le site en ligne
 
-Le site a maintenant besoin d'un **serveur Node.js** (pour les comptes et la base de données) : un hébergement
-de fichiers seuls (Netlify Drop) ne suffit plus. Par exemple, sur **Render** (https://render.com), gratuit :
+### Sur Vercel
+
+Le site (Vite) est servi par Vercel, et l'API tourne comme une fonction Vercel (`api/index.ts`, qui
+reprend le même serveur Express). `vercel.json` envoie `/api/...` à la fonction et toutes les autres
+pages au site.
+
+1. Mettre le projet sur GitHub (sans `.env`).
+2. Sur https://vercel.com : *Add New* → *Project* → importer le dépôt. Vercel lit `vercel.json` :
+   rien à changer dans *Build and Output Settings*.
+3. *Environment Variables* : ajouter `DATABASE_URL` (l'adresse de la base Aiven) et, si besoin,
+   `ADMIN_EMAILS` et `SIGNUP_CODE`. Pour vérifier le certificat d'Aiven, coller le contenu de `ca.pem`
+   dans `DATABASE_CA_CERT`.
+4. *Deploy*. Ensuite, chaque `git push` sur `main` met le site à jour.
+
+Aiven doit accepter les connexions de Vercel : dans le service MySQL, *Allowed IP addresses* doit
+contenir `0.0.0.0/0` (c'est le réglage par défaut).
+
+### Sur un hébergeur Node.js (Render, Railway, un VPS)
+
+Le même serveur envoie le site et l'API. Par exemple, sur **Render** (https://render.com), gratuit :
 
 1. Mettre le projet sur GitHub (sans `.env`).
 2. Sur Render : *New* → *Web Service* → choisir le dépôt.
 3. *Build command* : `npm ci --include=dev && npm run build` ; *Start command* : `npm start`.
 4. *Environment* : ajouter `NODE_ENV` = `production`, `DATABASE_URL`, `ADMIN_EMAILS` (et `SIGNUP_CODE` si besoin).
 
-Le même serveur envoie le site et répond à l'API. Tout autre hébergeur Node.js (Railway, Fly.io, un VPS) marche
+Tout autre hébergeur Node.js (Railway, Fly.io, un VPS) marche
 de la même façon : `npm run build` puis `npm start`, avec les mêmes réglages.
 
 **Mettre à jour le site ne touche jamais aux comptes ni à la progression** : tout est dans la base MySQL, que les

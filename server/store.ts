@@ -6,7 +6,7 @@
 import mysql, { type Pool, type RowDataPacket } from 'mysql2/promise';
 import { readFileSync } from 'node:fs';
 
-import { EMPTY, normalize, type Saved } from '../src/state/merge.ts';
+import { EMPTY, normalize, type Saved } from '../src/state/merge.js';
 
 /** isAdmin: set in the database (npm run admin). The emails of ADMIN_EMAILS are admins too (server/app.ts). */
 export type User = { id: number; email: string; passwordHash: string; isAdmin: boolean; createdAt: Date; lastLoginAt: Date | null };
@@ -66,11 +66,14 @@ const ADDED_COLUMNS = [{ table: 'users', column: 'is_admin', sql: 'ALTER TABLE u
 function poolFromUrl(url: string): Pool {
   const u = new URL(url);
   const sslMode = (u.searchParams.get('ssl-mode') ?? u.searchParams.get('sslmode') ?? '').toUpperCase();
-  const caPath = process.env.DATABASE_CA_CERT;
+  // DATABASE_CA_CERT: the path of ca.pem, or its content (-----BEGIN CERTIFICATE----- …), handy on
+  // hosts where there is no file to upload, like Vercel
+  const ca = process.env.DATABASE_CA_CERT?.trim();
   let ssl: mysql.SslOptions | undefined;
-  if (caPath) {
+  if (ca) {
     // the certificate of the server is checked (Aiven: "CA certificate" on the service page)
-    ssl = { ca: readFileSync(caPath, 'utf8'), rejectUnauthorized: true };
+    // (pasted on one line, the line breaks may be written \n)
+    ssl = { ca: ca.startsWith('-----BEGIN') ? ca.replace(/\\n/g, '\n') : readFileSync(ca, 'utf8'), rejectUnauthorized: true };
   } else if (sslMode && sslMode !== 'DISABLED') {
     // ssl-mode=REQUIRED: the connection is encrypted, like the mysql client does with this mode
     ssl = { rejectUnauthorized: false };
@@ -84,7 +87,8 @@ function poolFromUrl(url: string): Pool {
     database: decodeURIComponent(u.pathname.replace(/^\//, '')),
     ssl,
     timezone: 'Z',
-    connectionLimit: 5,
+    // a Vercel function has many small instances: few connections each
+    connectionLimit: Number(process.env.DB_POOL_SIZE ?? (process.env.VERCEL ? 2 : 5)),
     waitForConnections: true,
     enableKeepAlive: true,
   });

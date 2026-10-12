@@ -10,8 +10,8 @@
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
 
-import { hashPassword, normEmail, passwordProblem } from '../server/auth.ts';
-import { mysqlStore } from '../server/store.ts';
+import { hashPassword, normEmail, passwordProblem } from '../server/auth.js';
+import { mysqlStore } from '../server/store.js';
 
 const HELP = `Utilisation :
   npm run admin -- add <e-mail> [--password]   créer un administrateur (ou donner ce rôle à un compte)
