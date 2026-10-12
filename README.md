@@ -24,7 +24,7 @@ Copier `.env.example` en `.env` et le remplir :
 | Réglage | Rôle |
 |---|---|
 | `DATABASE_URL` | L'adresse de la base MySQL (Aiven : *Service URI*), de la forme `mysql://UTILISATEUR:MOT_DE_PASSE@HÔTE:PORT/pybac?ssl-mode=REQUIRED` |
-| `ADMIN_EMAILS` | Les e-mails des administrateurs, séparés par des virgules. L'administrateur crée son compte sur le site avec cet e-mail, comme un élève |
+| `ADMIN_EMAILS` | Facultatif : des e-mails d'administrateurs, séparés par des virgules (le plus simple est `npm run admin`, plus bas) |
 | `SIGNUP_CODE` | Facultatif : un code à donner aux élèves. S'il est rempli, il est demandé pour créer un compte |
 | `DATABASE_CA_CERT` | Facultatif : le chemin du certificat `ca.pem` d'Aiven, pour vérifier que le serveur parle bien à votre base |
 
@@ -66,7 +66,28 @@ changer l'`id` d'une leçon (dans `src/content/`) ferait perdre sa réussite : n
 
 ## Le back-office (administrateurs)
 
-Un administrateur (e-mail dans `ADMIN_EMAILS`) arrive, en se connectant, dans le **back-office** (`/admin`) :
+### Créer un administrateur
+
+Depuis le dossier du projet (le fichier `.env` doit contenir `DATABASE_URL`) :
+
+```bash
+npm run admin -- add prof@lycee.fr
+```
+
+Le script demande un mot de passe (il ne s'affiche pas pendant la frappe), crée le compte et le marque
+administrateur dans la base. Si le compte existe déjà, il devient administrateur (son mot de passe ne change pas ;
+ajouter `--password` pour en choisir un nouveau).
+
+```bash
+npm run admin -- list
+npm run admin -- remove prof@lycee.fr
+```
+
+`ADMIN_EMAILS` (dans `.env` ou sur l'hébergeur) reste possible : ces e-mails sont aussi administrateurs.
+
+### Ce qu'on y trouve
+
+Un administrateur arrive, en se connectant, dans le **back-office** (`/admin`) :
 
 - **Tableau de bord** : élèves inscrits, actifs cette semaine et aujourd'hui, activité récente, élèves à relancer
   (rien depuis 7 jours), leçons les plus difficiles (le moins d'étoiles).

@@ -33,7 +33,9 @@ export type Config = {
 
 type Authed = Request & { user?: User };
 
-const publicUser = (u: User, admins: Set<string>) => ({ id: u.id, email: u.email, isAdmin: admins.has(u.email) });
+/** Admin: marked in the database (npm run admin), or email listed in ADMIN_EMAILS. */
+const isAdmin = (u: { email: string; isAdmin: boolean }, admins: Set<string>) => u.isAdmin || admins.has(u.email);
+const publicUser = (u: User, admins: Set<string>) => ({ id: u.id, email: u.email, isAdmin: isAdmin(u, admins) });
 
 function readCookie(req: Request, name: string): string | null {
   const header = req.headers.cookie;
@@ -81,7 +83,7 @@ export function createApp(cfg: Config) {
   };
 
   const adminOnly = (req: Authed, res: Response, next: NextFunction) => {
-    if (!req.user || !admins.has(req.user.email)) return void res.status(403).json({ error: 'Réservé aux administrateurs.' });
+    if (!req.user || !isAdmin(req.user, admins)) return void res.status(403).json({ error: 'Réservé aux administrateurs.' });
     next();
   };
 
@@ -145,7 +147,7 @@ export function createApp(cfg: Config) {
 
   api.get('/admin/users', auth, adminOnly, async (_req, res) => {
     const users = await store.listUsers();
-    res.json({ users: users.map((u) => ({ ...u, isAdmin: admins.has(u.email) })) });
+    res.json({ users: users.map((u) => ({ ...u, isAdmin: isAdmin(u, admins) })) });
   });
 
   api.post('/admin/users/:id/password', auth, adminOnly, async (req: Authed, res) => {
@@ -163,7 +165,7 @@ export function createApp(cfg: Config) {
     const target = await store.userById(Number(req.params.id));
     if (!target) return void res.status(404).json({ error: 'Élève introuvable.' });
     if (target.id === req.user!.id) return void res.status(400).json({ error: 'Vous ne pouvez pas supprimer votre propre compte.' });
-    if (admins.has(target.email)) return void res.status(400).json({ error: 'Ce compte est administrateur : retirez d\'abord son e-mail de ADMIN_EMAILS.' });
+    if (isAdmin(target, admins)) return void res.status(400).json({ error: 'Ce compte est administrateur : retirez-lui d\'abord ce rôle (npm run admin -- remove).' });
     await store.deleteUser(target.id);
     res.json({ ok: true });
   });

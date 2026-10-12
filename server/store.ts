@@ -8,7 +8,8 @@ import { readFileSync } from 'node:fs';
 
 import { EMPTY, normalize, type Saved } from '../src/state/merge.ts';
 
-export type User = { id: number; email: string; passwordHash: string; createdAt: Date; lastLoginAt: Date | null };
+/** isAdmin: set in the database (npm run admin). The emails of ADMIN_EMAILS are admins too (server/app.ts). */
+export type User = { id: number; email: string; passwordHash: string; isAdmin: boolean; createdAt: Date; lastLoginAt: Date | null };
 export type UserWithProgress = Omit<User, 'passwordHash'> & { progress: Saved; progressUpdatedAt: Date | null };
 
 export interface Store {
@@ -16,6 +17,7 @@ export interface Store {
   userByEmail(email: string): Promise<User | null>;
   userById(id: number): Promise<User | null>;
   setPassword(userId: number, passwordHash: string): Promise<void>;
+  setAdmin(userId: number, on: boolean): Promise<void>;
   touchLogin(userId: number): Promise<void>;
   createSession(tokenHash: string, userId: number, expiresAt: Date): Promise<void>;
   sessionUser(tokenHash: string): Promise<User | null>;
@@ -36,6 +38,7 @@ const SCHEMA = [
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(254) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    is_admin TINYINT(1) NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL,
     last_login_at DATETIME NULL,
     UNIQUE KEY users_email (email)
@@ -55,6 +58,9 @@ const SCHEMA = [
     CONSTRAINT progress_user_fk FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
+
+/** Columns added after the first version: added to an existing table, without touching its rows. */
+const ADDED_COLUMNS = [{ table: 'users', column: 'is_admin', sql: 'ALTER TABLE users ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0 AFTER password_hash' }];
 
 /** mysql://user:password@host:port/database?ssl-mode=REQUIRED (the format given by Aiven). */
 function poolFromUrl(url: string): Pool {
@@ -84,8 +90,8 @@ function poolFromUrl(url: string): Pool {
   });
 }
 
-type UserRow = RowDataPacket & { id: number; email: string; password_hash: string; created_at: Date; last_login_at: Date | null };
-const toUser = (r: UserRow): User => ({ id: r.id, email: r.email, passwordHash: r.password_hash, createdAt: r.created_at, lastLoginAt: r.last_login_at });
+type UserRow = RowDataPacket & { id: number; email: string; password_hash: string; is_admin: number; created_at: Date; last_login_at: Date | null };
+const toUser = (r: UserRow): User => ({ id: r.id, email: r.email, passwordHash: r.password_hash, isAdmin: !!r.is_admin, createdAt: r.created_at, lastLoginAt: r.last_login_at });
 
 /** A JSON column comes back parsed (MySQL) or as text (MariaDB). */
 const parseData = (d: unknown): Saved => normalize(typeof d === 'string' ? JSON.parse(d) : d);
@@ -93,6 +99,16 @@ const parseData = (d: unknown): Saved => normalize(typeof d === 'string' ? JSON.
 export async function mysqlStore(url: string): Promise<Store> {
   const pool = poolFromUrl(url);
   for (const sql of SCHEMA) await pool.query(sql);
+  for (const c of ADDED_COLUMNS) {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      'SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+      [c.table, c.column],
+    );
+    if (Number(rows[0].n) === 0) {
+      await pool.query(c.sql);
+      console.log(`[db] colonne ajoutée : ${c.table}.${c.column}`);
+    }
+  }
 
   const one = async (sql: string, params: unknown[]) => {
     const [rows] = await pool.query<UserRow[]>(sql, params);
@@ -113,6 +129,9 @@ export async function mysqlStore(url: string): Promise<Store> {
     userById: (id) => one('SELECT * FROM users WHERE id = ?', [id]),
     async setPassword(userId, passwordHash) {
       await pool.execute('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, userId]);
+    },
+    async setAdmin(userId, on) {
+      await pool.execute('UPDATE users SET is_admin = ? WHERE id = ?', [on ? 1 : 0, userId]);
     },
     async touchLogin(userId) {
       await pool.execute('UPDATE users SET last_login_at = UTC_TIMESTAMP() WHERE id = ?', [userId]);
@@ -178,7 +197,7 @@ export function memoryStore(): Store {
   return {
     async createUser(email, passwordHash) {
       if (users.some((u) => u.email === email)) return null;
-      const u = { id: users.length + 1, email, passwordHash, createdAt: new Date(), lastLoginAt: null };
+      const u = { id: users.length + 1, email, passwordHash, isAdmin: false, createdAt: new Date(), lastLoginAt: null };
       users.push(u);
       return u;
     },
@@ -187,6 +206,10 @@ export function memoryStore(): Store {
     async setPassword(userId, passwordHash) {
       const u = users.find((x) => x.id === userId);
       if (u) u.passwordHash = passwordHash;
+    },
+    async setAdmin(userId, on) {
+      const u = users.find((x) => x.id === userId);
+      if (u) u.isAdmin = on;
     },
     async touchLogin(userId) {
       const u = users.find((x) => x.id === userId);

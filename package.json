@@ -10,7 +10,8 @@
     "build": "tsc -b && vite build",
     "start": "node --env-file-if-exists=.env server/index.ts",
     "typecheck": "tsc -b",
-    "verify": "tsx scripts/verify-content.ts"
+    "verify": "tsx scripts/verify-content.ts",
+    "admin": "node --env-file-if-exists=.env scripts/admin.ts"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",

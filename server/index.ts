@@ -28,7 +28,6 @@ const admins = new Set(
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
 );
-if (!admins.size) console.warn('[auth] ADMIN_EMAILS est vide : personne n\'a accès au suivi des élèves');
 
 const app = createApp({
   store,
