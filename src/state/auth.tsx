@@ -2,6 +2,7 @@
 // browser, so that a student already logged in can keep working without internet.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { setStudentView } from './admin-view';
 import { api, ApiError, offline } from './api';
 import { setResumeScope } from './lesson-resume';
 import { getItem, removeItem, setItem } from './storage';
@@ -48,6 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [signupCode, setSignupCode] = useState(false);
 
   const setUser = useCallback((u: User | null) => {
+    // a new login (or a logout) of an admin starts in the back-office again
+    if (!u || u.id !== cached()?.id) setStudentView(false);
     if (u) setItem(KEY, JSON.stringify(u));
     else removeItem(KEY);
     setResumeScope(u ? String(u.id) : null);

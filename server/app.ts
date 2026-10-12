@@ -10,6 +10,7 @@
 //   POST /api/progress/reset  erase the progress (on every device)
 //   GET  /api/admin/users     every student with their progress (admins only)
 //   POST /api/admin/users/:id/password   { password }: a new password for a student (admins only)
+//   DELETE /api/admin/users/:id   delete an account and its progress (admins only, not their own)
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -155,6 +156,15 @@ export function createApp(cfg: Config) {
     await store.setPassword(target.id, await hashPassword(req.body.password));
     // the old sessions of this student stop working
     await store.deleteSessions(target.id);
+    res.json({ ok: true });
+  });
+
+  api.delete('/admin/users/:id', auth, adminOnly, async (req: Authed, res) => {
+    const target = await store.userById(Number(req.params.id));
+    if (!target) return void res.status(404).json({ error: 'Élève introuvable.' });
+    if (target.id === req.user!.id) return void res.status(400).json({ error: 'Vous ne pouvez pas supprimer votre propre compte.' });
+    if (admins.has(target.email)) return void res.status(400).json({ error: 'Ce compte est administrateur : retirez d\'abord son e-mail de ADMIN_EMAILS.' });
+    await store.deleteUser(target.id);
     res.json({ ok: true });
   });
 

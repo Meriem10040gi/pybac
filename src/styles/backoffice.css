@@ -1,0 +1,372 @@
+/* Back-office (/admin): an ink-coloured menu and plain pages (no notebook ruling), so that it is
+   never mistaken for the student site. Computer: menu on the left. Phone: bar at the top, pages at
+   the bottom. */
+
+.bo {
+  min-height: 100dvh;
+  background: #f1f4f8;
+}
+
+.bo-main {
+  padding: 20px 16px calc(84px + var(--safe-bottom));
+}
+
+.bo-page {
+  max-width: 1160px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bo-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+}
+
+.bo-head h1 {
+  font-size: var(--t-2xl);
+  color: var(--ink);
+  word-break: break-word;
+}
+
+/* ---------- menu ---------- */
+
+.bo-side {
+  display: none;
+}
+
+.bo-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: calc(10px + var(--safe-top)) 16px 10px;
+  background: var(--ink);
+  color: #fff;
+}
+
+.bo-top .brand img {
+  border-radius: 9px;
+}
+
+.bo-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bo-top-actions .btn {
+  white-space: nowrap;
+}
+
+.bo-top .brand-name {
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .bo-top .brand-name {
+    display: none;
+  }
+}
+
+.bo-top-logout {
+  background: none;
+  border: 0;
+  color: #c9d4e0;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bo-tabbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  padding-bottom: var(--safe-bottom);
+}
+
+.bo-tabbar .tabbar-link.active {
+  color: var(--ink);
+}
+
+.bo-tabbar .tabbar-link.active .nav-icon {
+  background: var(--gold-soft);
+}
+
+@media (min-width: 960px) {
+  .bo {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+
+  .bo-side {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    padding: 24px 18px;
+    background: var(--ink);
+    color: #fff;
+    overflow-y: auto;
+  }
+
+  .bo-top,
+  .bo-tabbar {
+    display: none;
+  }
+
+  .bo-main {
+    padding: 36px 40px 64px;
+  }
+}
+
+.bo-side .brand-sub {
+  color: var(--gold);
+  opacity: 1;
+  font-weight: 750;
+}
+
+.bo-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  font-weight: 700;
+  color: #c9d4e0;
+  border-left: 4px solid transparent;
+}
+
+.bo-link:hover {
+  background: #ffffff12;
+  color: #fff;
+}
+
+.bo-link.active {
+  background: #ffffff1c;
+  color: #fff;
+  border-left-color: var(--gold);
+}
+
+.bo-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 18px;
+  border-top: 1px solid #ffffff26;
+}
+
+.bo-foot .account-email {
+  margin-top: 6px;
+}
+
+.bo-foot .link-button,
+.bo-side :focus-visible {
+  color: #c9d4e0;
+}
+
+.bo-return {
+  margin-bottom: 4px;
+}
+
+/* ---------- cards and figures ---------- */
+
+.bo-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.bo-kpis > div {
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.bo-kpis dt {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.bo-kpis dd {
+  margin: 0;
+  font-size: var(--t-2xl);
+  font-weight: 900;
+  font-variation-settings: var(--hand);
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.bo-kpis small {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--muted);
+  font-variation-settings: var(--text);
+}
+
+.bo-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 1000px) {
+  .bo-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+.bo-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.bo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  min-width: 0;
+}
+
+.bo-card h2 {
+  font-size: var(--t-lg);
+  color: var(--ink);
+}
+
+.bo-danger {
+  border-color: #f1c4c9;
+}
+
+.bo-danger h2 {
+  color: var(--marge-deep);
+}
+
+.bo-feed,
+.bo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bo-feed li,
+.bo-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--t-sm);
+}
+
+.bo-feed li:first-child,
+.bo-list li:first-child {
+  border-top: 0;
+}
+
+.bo-feed li > span:nth-child(2) {
+  flex: 1;
+  min-width: 200px;
+}
+
+.bo-feed-who,
+.bo-list a {
+  font-weight: 750;
+  color: var(--encre);
+}
+
+.bo-feed-who:hover,
+.bo-list a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bo-welcome p {
+  max-width: 62ch;
+}
+
+.bo-url {
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--code-bg);
+  font-size: var(--t-sm);
+  align-self: center;
+  word-break: break-all;
+}
+
+.bo-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-end;
+  min-height: 46px;
+  font-size: var(--t-sm);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.bo-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--encre);
+}
+
+/* lessons table */
+.bo-unit-row th {
+  background: var(--encre-soft) !important;
+  color: var(--encre);
+  font-size: var(--t-xs);
+  font-weight: 800;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.bo-lessons tbody th[scope='row'] {
+  font-weight: 650;
+  white-space: normal;
+  min-width: 220px;
+}
+
+.bo-lessons .tag {
+  margin-left: 8px;
+}
+
+/* the old admin styles also apply here */
+.bo .admin-module h2 {
+  color: var(--ink);
+}

@@ -1,78 +1,27 @@
-// "Suivi des élèves" (admins only): every account with its progress, the detail of one student
-// lesson by lesson, a new password for a student who forgot it, and an export for a spreadsheet.
-// The server checks again that the user is an admin (server/app.ts): this page only shows.
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+// Back-office: the list of the students (search, sort, export) and the page of one student
+// (lesson by lesson, new password, delete the account).
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { Button, ProgressBar } from '@/components/ui';
 import { COURSE, LESSONS } from '@/content/course';
 import { api } from '@/state/api';
 import { useAuth } from '@/state/auth';
-import type { Saved } from '@/state/merge';
 
-import { NotFound } from './not-found';
+import { ago, dateFmt, doneCount, downloadCsv, lastActive, streakNow, useAdminData, type Student } from './data';
+import { BoHead } from './shell';
 
-type Student = {
-  id: number;
-  email: string;
-  isAdmin: boolean;
-  createdAt: string;
-  lastLoginAt: string | null;
-  progress: Saved;
-  progressUpdatedAt: string | null;
-};
+type Sort = 'active' | 'done' | 'xp' | 'email';
 
-const day = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-function streakNow(p: Saved) {
-  const today = day(new Date());
-  const yesterday = day(new Date(Date.now() - 86400000));
-  return p.streak.last === today || p.streak.last === yesterday ? p.streak.count : 0;
-}
-
-/** Last time the student did something: last save of the progress or last login. */
-function lastActive(s: Student): Date | null {
-  const t = Math.max(s.progressUpdatedAt ? Date.parse(s.progressUpdatedAt) : 0, s.lastLoginAt ? Date.parse(s.lastLoginAt) : 0);
-  return t ? new Date(t) : null;
-}
-
-const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-
-function ago(d: Date | null) {
-  if (!d) return 'jamais';
-  const days = Math.floor((new Date(day(new Date())).getTime() - new Date(day(d)).getTime()) / 86400000);
-  if (days <= 0) return 'aujourd\'hui';
-  if (days === 1) return 'hier';
-  if (days < 30) return `il y a ${days} jours`;
-  return dateFmt.format(d);
-}
-
-const doneCount = (p: Saved) => LESSONS.filter((l) => p.done[l.lesson.id]).length;
-
-function useStudents() {
-  const [students, setStudents] = useState<Student[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const load = useCallback(() => {
-    setError(null);
-    api<{ users: Student[] }>('/admin/users')
-      .then((r) => setStudents(r.users))
-      .catch((e) => setError(e.message));
-  }, []);
-  useEffect(load, [load]);
-  return { students, error, reload: load };
-}
-
-type Sort = 'email' | 'done' | 'xp' | 'active';
-
-export function AdminPage() {
-  const auth = useAuth();
-  const { students, error, reload } = useStudents();
+export function StudentsPage() {
+  const { accounts, students, error, loading, reload } = useAdminData();
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('active');
+  const [withAdmins, setWithAdmins] = useState(false);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = (students ?? []).filter((s) => !q || s.email.includes(q));
+    const list = (withAdmins ? (accounts ?? []) : students).filter((s) => !q || s.email.includes(q));
     const key: Record<Sort, (s: Student) => number | string> = {
       email: (s) => s.email,
       done: (s) => -doneCount(s.progress),
@@ -84,27 +33,14 @@ export function AdminPage() {
       const y = key[sort](b);
       return x < y ? -1 : x > y ? 1 : a.email.localeCompare(b.email);
     });
-  }, [students, query, sort]);
-
-  if (!auth.user?.isAdmin) return <NotFound inShell />;
-
-  const week = Date.now() - 7 * 86400000;
-  const activeWeek = (students ?? []).filter((s) => (lastActive(s)?.getTime() ?? 0) > week).length;
+  }, [accounts, students, query, sort, withAdmins]);
 
   return (
-    <div className="page admin">
-      <header className="page-head admin-head">
-        <div>
-          <h1>Suivi des élèves</h1>
-          <p className="muted">
-            {students ? `${students.length} compte${students.length > 1 ? 's' : ''}, dont ${activeWeek} actif${activeWeek > 1 ? 's' : ''} ces 7 derniers jours.` : 'Chargement…'}
-          </p>
-        </div>
-        <div className="row">
-          <Button small variant="ghost" label="Actualiser" onClick={reload} />
-          <Button small variant="ghost" label="Exporter pour un tableur" onClick={() => students && downloadCsv(students)} disabled={!students?.length} />
-        </div>
-      </header>
+    <div className="bo-page">
+      <BoHead title="Élèves" sub={accounts ? `${students.length} élève${students.length > 1 ? 's' : ''} inscrit${students.length > 1 ? 's' : ''}` : 'Chargement…'}>
+        <Button small variant="ghost" label="Actualiser" onClick={reload} busy={loading} />
+        <Button small variant="ghost" label="Exporter pour un tableur" onClick={() => downloadCsv(students)} disabled={!students.length} />
+      </BoHead>
 
       {error ? (
         <div className="alert alert-bad" role="alert">
@@ -126,9 +62,13 @@ export function AdminPage() {
             <option value="email">adresse e-mail</option>
           </select>
         </label>
+        <label className="bo-check">
+          <input type="checkbox" checked={withAdmins} onChange={(e) => setWithAdmins(e.target.checked)} />
+          Montrer les administrateurs
+        </label>
       </div>
 
-      {students && rows.length === 0 ? <p className="muted">{students.length ? 'Aucun élève ne correspond à cette recherche.' : 'Personne n\'a encore créé de compte. Donnez l\'adresse du site à vos élèves.'}</p> : null}
+      {accounts && rows.length === 0 ? <p className="muted">{students.length ? 'Aucun élève ne correspond à cette recherche.' : 'Personne n\'a encore créé de compte élève.'}</p> : null}
 
       {rows.length ? (
         <div className="admin-table-wrap">
@@ -140,6 +80,7 @@ export function AdminPage() {
                 <th scope="col">XP</th>
                 <th scope="col">Jours d'affilée</th>
                 <th scope="col">Dernière activité</th>
+                <th scope="col">Inscription</th>
               </tr>
             </thead>
             <tbody>
@@ -148,7 +89,7 @@ export function AdminPage() {
                 return (
                   <tr key={s.id}>
                     <th scope="row">
-                      <Link to={`/suivi/${s.id}`}>{s.email}</Link>
+                      <Link to={`/admin/eleves/${s.id}`}>{s.email}</Link>
                       {s.isAdmin ? <span className="tag">admin</span> : null}
                     </th>
                     <td>
@@ -162,6 +103,7 @@ export function AdminPage() {
                     <td>{s.progress.xp}</td>
                     <td>{streakNow(s.progress)}</td>
                     <td>{ago(lastActive(s))}</td>
+                    <td>{dateFmt.format(new Date(s.createdAt))}</td>
                   </tr>
                 );
               })}
@@ -173,16 +115,14 @@ export function AdminPage() {
   );
 }
 
-export function AdminStudentPage() {
-  const auth = useAuth();
+export function StudentPage() {
   const { id } = useParams();
-  const { students, error } = useStudents();
-  if (!auth.user?.isAdmin) return <NotFound inShell />;
-  const s = students?.find((x) => String(x.id) === id);
+  const { accounts, error } = useAdminData();
+  const s = accounts?.find((x) => String(x.id) === id);
 
   return (
-    <div className="page admin">
-      <Link to="/suivi" className="back">
+    <div className="bo-page">
+      <Link to="/admin/eleves" className="back">
         ‹ Tous les élèves
       </Link>
       {error ? (
@@ -190,8 +130,8 @@ export function AdminStudentPage() {
           <p>{error}</p>
         </div>
       ) : null}
-      {!students && !error ? <p className="muted">Chargement…</p> : null}
-      {students && !s ? <p className="muted">Cet élève n'existe pas (ou plus).</p> : null}
+      {!accounts && !error ? <p className="muted">Chargement…</p> : null}
+      {accounts && !s ? <p className="muted">Ce compte n'existe pas (ou plus).</p> : null}
       {s ? <StudentDetail s={s} /> : null}
     </div>
   );
@@ -202,19 +142,20 @@ function StudentDetail({ s }: { s: Student }) {
   const n = doneCount(p);
   return (
     <>
-      <header className="page-head">
-        <h1 className="admin-email">{s.email}</h1>
-        <p className="muted">
-          Inscrit le {dateFmt.format(new Date(s.createdAt))}. Dernière activité : {ago(lastActive(s))}.
-          {p.freeAccess ? ' Mode libre activé.' : ''}
-        </p>
-      </header>
+      <BoHead
+        title={s.email}
+        sub={
+          <>
+            Inscrit le {dateFmt.format(new Date(s.createdAt))}. Dernière activité : {ago(lastActive(s))}.{p.freeAccess ? ' Mode libre activé.' : ''}
+          </>
+        }
+      />
 
-      <dl className="admin-stats">
+      <dl className="bo-kpis">
         <div>
           <dt>Leçons terminées</dt>
           <dd>
-            {n} sur {LESSONS.length}
+            {n} <small>sur {LESSONS.length}</small>
           </dd>
         </div>
         <div>
@@ -224,6 +165,10 @@ function StudentDetail({ s }: { s: Student }) {
         <div>
           <dt>Jours d'affilée</dt>
           <dd>{streakNow(p)}</dd>
+        </div>
+        <div>
+          <dt>Leçons en cours</dt>
+          <dd>{Object.keys(p.inProgress).length}</dd>
         </div>
       </dl>
 
@@ -254,7 +199,7 @@ function StudentDetail({ s }: { s: Student }) {
                                 {'★'.repeat(rec.stars)}
                                 <span className="path-stars-off">{'★'.repeat(3 - rec.stars)}</span>
                               </span>{' '}
-                              {dateFmt.format(new Date(rec.date))}
+                              {dateFmt.format(new Date(`${rec.date}T12:00:00`))}
                             </>
                           ) : cur ? (
                             `en cours, étape ${cur.pos + 1} sur ${cur.total}`
@@ -273,6 +218,7 @@ function StudentDetail({ s }: { s: Student }) {
       ))}
 
       <NewPassword student={s} />
+      {!s.isAdmin ? <DeleteAccount student={s} /> : null}
     </>
   );
 }
@@ -288,7 +234,7 @@ function NewPassword({ student }: { student: Student }) {
     setMsg(null);
     try {
       await api(`/admin/users/${student.id}/password`, { body: { password } });
-      setMsg({ ok: true, text: `Mot de passe changé. Donnez-le à l'élève : il se connecte avec, puis ses autres appareils lui demanderont de se reconnecter.` });
+      setMsg({ ok: true, text: 'Mot de passe changé. Donnez-le à l\'élève : ses appareils lui demanderont de se reconnecter.' });
       setPassword('');
     } catch (err) {
       setMsg({ ok: false, text: err instanceof Error ? err.message : 'Échec.' });
@@ -297,9 +243,9 @@ function NewPassword({ student }: { student: Student }) {
   };
 
   return (
-    <section className="admin-password">
+    <section className="bo-card">
       <h2>Nouveau mot de passe</h2>
-      <p className="muted">Pour un élève qui a oublié le sien. L'ancien mot de passe ne marchera plus.</p>
+      <p className="muted small">Pour un élève qui a oublié le sien. L'ancien mot de passe ne marchera plus.</p>
       <form className="row" onSubmit={submit}>
         <label className="field" style={{ flex: 1, minWidth: 220 }}>
           <span className="visually-hidden">Nouveau mot de passe</span>
@@ -318,30 +264,47 @@ function NewPassword({ student }: { student: Student }) {
   );
 }
 
-/** One line per student, one column per lesson (stars, empty if not done). Separator ";" and BOM:
- * opens directly in Excel or LibreOffice set to French. */
-function downloadCsv(students: Student[]) {
-  const cell = (v: string | number) => {
-    const t = String(v);
-    return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+function DeleteAccount({ student }: { student: Student }) {
+  const { reload } = useAdminData();
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (auth.user?.id === student.id) return null;
+
+  const remove = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/admin/users/${student.id}`, { method: 'DELETE', body: {} });
+      reload();
+      navigate('/admin/eleves');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Échec.');
+      setBusy(false);
+    }
   };
-  const head = ['E-mail', 'Leçons terminées', 'XP', "Jours d'affilée", 'Dernière activité', 'Inscription', ...LESSONS.map((l) => `${l.unit.title} : ${l.lesson.title}`)];
-  const lines = students.map((s) => {
-    const last = lastActive(s);
-    return [
-      s.email,
-      doneCount(s.progress),
-      s.progress.xp,
-      streakNow(s.progress),
-      last ? day(last) : '',
-      day(new Date(s.createdAt)),
-      ...LESSONS.map((l) => s.progress.done[l.lesson.id]?.stars ?? ''),
-    ];
-  });
-  const csv = '﻿' + [head, ...lines].map((r) => r.map(cell).join(';')).join('\r\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = `pybac-suivi-${day(new Date())}.csv`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+
+  return (
+    <section className="bo-card bo-danger">
+      <h2>Supprimer le compte</h2>
+      <p className="muted small">Le compte et toute sa progression sont effacés pour toujours. L'élève pourra recréer un compte, qui repartira de zéro.</p>
+      {confirm ? (
+        <div className="row">
+          <Button small variant="ghost" label="Annuler" onClick={() => setConfirm(false)} />
+          <Button small variant="bad" label={`Supprimer ${student.email}`} onClick={() => void remove()} busy={busy} />
+        </div>
+      ) : (
+        <div>
+          <Button small variant="ghost" label="Supprimer ce compte…" onClick={() => setConfirm(true)} />
+        </div>
+      )}
+      {error ? (
+        <div className="alert alert-bad" role="alert">
+          <p>{error}</p>
+        </div>
+      ) : null}
+    </section>
+  );
 }

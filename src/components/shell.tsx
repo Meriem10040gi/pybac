@@ -1,7 +1,8 @@
 // Frame of the course pages. Computer: a menu on the left (logo, XP, pages, settings).
 // Phone: a bar at the top (logo, XP) and the pages at the bottom of the screen.
-import { Link, NavLink, Outlet, ScrollRestoration } from 'react-router';
+import { Link, NavLink, Outlet, ScrollRestoration, useNavigate } from 'react-router';
 
+import { setStudentView } from '@/state/admin-view';
 import { useAuth } from '@/state/auth';
 import { useProgress } from '@/state/progress';
 
@@ -24,12 +25,15 @@ const PAGES = [
   { to: '/', label: 'Le parcours', icon: '☰', end: true },
   { to: '/bac-a-sable', label: 'Bac à sable', icon: '>_', end: false },
 ];
-const ADMIN_PAGE = { to: '/suivi', label: 'Suivi des élèves', icon: '▤', end: false };
 
 export function Shell() {
   const progress = useProgress();
   const auth = useAuth();
-  const pages = auth.user?.isAdmin ? [...PAGES, ADMIN_PAGE] : PAGES;
+  const navigate = useNavigate();
+  const backOffice = () => {
+    setStudentView(false);
+    navigate('/admin');
+  };
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -38,7 +42,7 @@ export function Shell() {
           <Stats xp={progress.xp} streak={progress.streakNow} />
         </div>
         <nav className="sidebar-nav" aria-label="Pages">
-          {pages.map((p) => (
+          {PAGES.map((p) => (
             <NavLink key={p.to} to={p.to} end={p.end} className="sidebar-link">
               <span className="nav-icon mono" aria-hidden>
                 {p.icon}
@@ -48,6 +52,11 @@ export function Shell() {
           ))}
         </nav>
         <div className="sidebar-foot">
+          {auth.user?.isAdmin ? (
+            <button type="button" className="btn btn-gold btn-small btn-block bo-return" onClick={backOffice}>
+              Retour au back-office
+            </button>
+          ) : null}
           <Settings />
           <Account />
         </div>
@@ -56,7 +65,13 @@ export function Shell() {
       <header className="topbar">
         <Brand />
         <div className="topbar-stats">
-          <Stats xp={progress.xp} streak={progress.streakNow} />
+          {auth.user?.isAdmin ? (
+            <button type="button" className="btn btn-gold btn-small" onClick={backOffice}>
+              Back-office
+            </button>
+          ) : (
+            <Stats xp={progress.xp} streak={progress.streakNow} />
+          )}
         </div>
       </header>
 
@@ -64,8 +79,8 @@ export function Shell() {
         <Outlet />
       </main>
 
-      <nav className={`tabbar${pages.length > 2 ? ' is-3' : ''}`} aria-label="Pages">
-        {pages.map((p) => (
+      <nav className="tabbar" aria-label="Pages">
+        {PAGES.map((p) => (
           <NavLink key={p.to} to={p.to} end={p.end} className="tabbar-link">
             <span className="nav-icon mono" aria-hidden>
               {p.icon}

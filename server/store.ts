@@ -25,6 +25,8 @@ export interface Store {
   /** Reads the progress, changes it with `f` and saves it, without another request in between. */
   updateProgress(userId: number, f: (old: Saved) => Saved): Promise<Saved>;
   listUsers(): Promise<UserWithProgress[]>;
+  /** Deletes the account, its sessions and its progress. */
+  deleteUser(userId: number): Promise<void>;
 }
 
 // ---------------------------------------------------------------- MySQL
@@ -151,6 +153,10 @@ export async function mysqlStore(url: string): Promise<Store> {
         conn.release();
       }
     },
+    async deleteUser(userId) {
+      // sessions and progress go with the account (ON DELETE CASCADE)
+      await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
+    },
     async listUsers() {
       const [rows] = await pool.query<(UserRow & { data: unknown; updated_at: Date | null })[]>(
         'SELECT u.*, p.data, p.updated_at FROM users u LEFT JOIN progress p ON p.user_id = u.id ORDER BY u.email',
@@ -204,6 +210,12 @@ export function memoryStore(): Store {
       const next = normalize(f(progress.get(userId)?.data ?? EMPTY));
       progress.set(userId, { data: next, updatedAt: new Date() });
       return next;
+    },
+    async deleteUser(userId) {
+      const i = users.findIndex((u) => u.id === userId);
+      if (i >= 0) users.splice(i, 1);
+      progress.delete(userId);
+      for (const [k, x] of sessions) if (x.userId === userId) sessions.delete(k);
     },
     listUsers: async () =>
       [...users]

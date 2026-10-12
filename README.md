@@ -15,7 +15,7 @@ fonctionne même **sans internet**, et il peut être **installé** comme une app
 
 Chaque élève a un **compte** (e-mail et mot de passe). Sa progression (leçons terminées, XP, jours d'affilée)
 est enregistrée dans la **base de données MySQL** : il la retrouve sur l'ordinateur et sur le téléphone, et
-l'administrateur suit la progression de tous les élèves (page *Suivi des élèves*).
+l'administrateur suit la progression de tous les élèves dans le **back-office**.
 
 ## Les réglages : le fichier `.env`
 
@@ -64,19 +64,25 @@ nouvelles versions ne vident pas (les tables ne sont créées que si elles n'exi
 enregistrée par identifiant de leçon : modifier le texte d'une leçon garde les leçons déjà terminées. Seul
 changer l'`id` d'une leçon (dans `src/content/`) ferait perdre sa réussite : ne le faites pas.
 
-## Suivi des élèves (administrateurs)
+## Le back-office (administrateurs)
 
-- La liste des comptes : leçons terminées, XP, jours d'affilée, dernière activité ; recherche et tri.
-- Le détail d'un élève, leçon par leçon (étoiles, date, étape en cours).
-- **Nouveau mot de passe** pour un élève qui a oublié le sien (il n'y a pas d'envoi d'e-mail).
-- **Exporter pour un tableur** : un fichier CSV (Excel, LibreOffice) avec une colonne par leçon.
+Un administrateur (e-mail dans `ADMIN_EMAILS`) arrive, en se connectant, dans le **back-office** (`/admin`) :
+
+- **Tableau de bord** : élèves inscrits, actifs cette semaine et aujourd'hui, activité récente, élèves à relancer
+  (rien depuis 7 jours), leçons les plus difficiles (le moins d'étoiles).
+- **Élèves** : la liste (recherche, tri, **export pour un tableur** avec une colonne par leçon), puis le détail
+  d'un élève leçon par leçon, **un nouveau mot de passe** pour un élève qui a oublié le sien, et la suppression
+  d'un compte.
+- **Leçons** : pour chaque leçon, combien d'élèves l'ont terminée, combien l'ont en cours, et les étoiles en moyenne.
+
+*Voir le site élève* ouvre le site comme un élève (pour le reste de la visite) ; *Retour au back-office* revient.
 
 ## Sécurité
 
 - Les mots de passe ne sont jamais enregistrés : seulement leur empreinte (scrypt).
 - La session est un cookie `HttpOnly` (invisible pour le JavaScript de la page), valable 180 jours.
 - Trop d'essais de connexion ralentissent : 10 essais par quart d'heure.
-- La page de suivi est vérifiée par le serveur : un élève ne peut pas lire la progression des autres.
+- Le back-office est vérifié par le serveur : un élève ne peut ni lire la progression des autres, ni modifier un compte.
 
 ## Installer l'application
 
