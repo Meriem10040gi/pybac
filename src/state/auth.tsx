@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { setStudentView } from './admin-view';
-import { api, ApiError, offline } from './api';
+import { api, ApiError, offline, setApiAccount } from './api';
 import { setResumeScope } from './lesson-resume';
 import { getItem, removeItem, setItem } from './storage';
 
@@ -54,9 +54,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (u) setItem(KEY, JSON.stringify(u));
     else removeItem(KEY);
     setResumeScope(u ? String(u.id) : null);
+    setApiAccount(u ? u.id : null);
     setUserState(u);
     setStatus(u ? 'in' : 'out');
   }, []);
+
+  // another tab logged in or out with another account: this tab reloads, so that it never shows
+  // (nor saves) the progress of an account that is no longer the one of the browser
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== KEY && e.key !== null) return;
+      const now = cached();
+      if ((now?.id ?? null) !== (user?.id ?? null)) window.location.reload();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [user]);
 
   useEffect(() => {
     api<{ user: User }>('/me')

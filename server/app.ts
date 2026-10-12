@@ -82,6 +82,14 @@ export function createApp(cfg: Config) {
     next();
   };
 
+  // The app says which account it believes it is (header X-PyBac-User). A tab still showing another
+  // account (the session changed in another tab) must not write its progress into this one.
+  const sameAccount = (req: Authed, res: Response, next: NextFunction) => {
+    const expected = req.get('x-pybac-user');
+    if (expected && Number(expected) !== req.user!.id) return void res.status(409).json({ error: 'Vous êtes connecté avec un autre compte dans ce navigateur. La page va se recharger.', code: 'other-account' });
+    next();
+  };
+
   const adminOnly = (req: Authed, res: Response, next: NextFunction) => {
     if (!req.user || !isAdmin(req.user, admins)) return void res.status(403).json({ error: 'Réservé aux administrateurs.' });
     next();
@@ -130,27 +138,27 @@ export function createApp(cfg: Config) {
     res.json({ user: publicUser(req.user!, admins) });
   });
 
-  api.get('/progress', auth, async (req: Authed, res) => {
+  api.get('/progress', auth, sameAccount, async (req: Authed, res) => {
     res.json({ data: await store.getProgress(req.user!.id) });
   });
 
-  api.put('/progress', auth, async (req: Authed, res) => {
+  api.put('/progress', auth, sameAccount, async (req: Authed, res) => {
     const incoming = normalize(req.body?.data);
     const data = await store.updateProgress(req.user!.id, (old) => merge(old, incoming));
     res.json({ data });
   });
 
-  api.post('/progress/reset', auth, async (req: Authed, res) => {
+  api.post('/progress/reset', auth, sameAccount, async (req: Authed, res) => {
     const data = await store.updateProgress(req.user!.id, (old) => ({ ...EMPTY, epoch: old.epoch + 1 }));
     res.json({ data });
   });
 
-  api.get('/admin/users', auth, adminOnly, async (_req, res) => {
+  api.get('/admin/users', auth, sameAccount, adminOnly, async (_req, res) => {
     const users = await store.listUsers();
     res.json({ users: users.map((u) => ({ ...u, isAdmin: isAdmin(u, admins) })) });
   });
 
-  api.post('/admin/users/:id/password', auth, adminOnly, async (req: Authed, res) => {
+  api.post('/admin/users/:id/password', auth, sameAccount, adminOnly, async (req: Authed, res) => {
     const target = await store.userById(Number(req.params.id));
     if (!target) return void res.status(404).json({ error: 'Élève introuvable.' });
     const problem = passwordProblem(req.body?.password);
@@ -161,7 +169,7 @@ export function createApp(cfg: Config) {
     res.json({ ok: true });
   });
 
-  api.delete('/admin/users/:id', auth, adminOnly, async (req: Authed, res) => {
+  api.delete('/admin/users/:id', auth, sameAccount, adminOnly, async (req: Authed, res) => {
     const target = await store.userById(Number(req.params.id));
     if (!target) return void res.status(404).json({ error: 'Élève introuvable.' });
     if (target.id === req.user!.id) return void res.status(400).json({ error: 'Vous ne pouvez pas supprimer votre propre compte.' });

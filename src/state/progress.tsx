@@ -13,9 +13,6 @@ import { getItem, removeItem, setItem } from './storage';
 
 export type { InProgress, LessonRecord } from './merge';
 
-/** The key of the version without accounts: its progress is given to the first account that logs in. */
-const LEGACY_KEY = 'progress-v1';
-
 export type SyncState = 'loading' | 'saved' | 'saving' | 'offline';
 
 type Progress = Saved & {
@@ -60,14 +57,9 @@ export function ProgressProvider({ userId, onExpired, children }: { userId: numb
   const dirtyKey = `progress-dirty:${userId}`;
 
   // localStorage is synchronous: the progress is there from the first render
-  const [saved, setSaved] = useState<Saved>(() => {
-    const mine = read(key) ?? EMPTY;
-    const legacy = read(LEGACY_KEY);
-    if (!legacy) return mine;
-    removeItem(LEGACY_KEY);
-    setItem(dirtyKey, '1');
-    return merge(mine, legacy);
-  });
+  // only the copy of this account: the progress of the version without accounts (key "progress-v1")
+  // is not given to anyone, it would land in whichever account logs in first on this browser
+  const [saved, setSaved] = useState<Saved>(() => read(key) ?? EMPTY);
   const [sync, setSync] = useState<SyncState>('loading');
   const current = useRef(saved);
   current.current = saved;
