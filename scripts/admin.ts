@@ -11,7 +11,7 @@ import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
 
 import { hashPassword, normEmail, passwordProblem } from '../server/auth.js';
-import { mysqlStore } from '../server/store.js';
+import { createStore } from '../server/store.js';
 
 const HELP = `Utilisation :
   npm run admin -- add <e-mail> [--password]   créer un administrateur (ou donner ce rôle à un compte)
@@ -108,7 +108,7 @@ ${HELP}`);
 const url = process.env.DATABASE_URL?.trim();
 if (!url) fail('DATABASE_URL manque : remplissez le fichier .env (voir .env.example).');
 
-const store = await mysqlStore(url);
+const store = await createStore(url);
 const envAdmins = new Set((process.env.ADMIN_EMAILS ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean));
 
 if (command === 'list') {

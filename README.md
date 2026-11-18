@@ -14,7 +14,7 @@ Python tourne **dans le navigateur** (Pyodide, environ 10 Mo téléchargés à l
 fonctionne même **sans internet**, et il peut être **installé** comme une application.
 
 Chaque élève a un **compte** (e-mail et mot de passe). Sa progression (leçons terminées, XP, jours d'affilée)
-est enregistrée dans la **base de données MySQL** : il la retrouve sur l'ordinateur et sur le téléphone, et
+est enregistrée dans la **base de données (PostgreSQL ou MySQL)** : il la retrouve sur l'ordinateur et sur le téléphone, et
 l'administrateur suit la progression de tous les élèves dans le **back-office**.
 
 ## Les réglages : le fichier `.env`
@@ -23,7 +23,7 @@ Copier `.env.example` en `.env` et le remplir :
 
 | Réglage | Rôle |
 |---|---|
-| `DATABASE_URL` | L'adresse de la base MySQL (Aiven : *Service URI*), de la forme `mysql://UTILISATEUR:MOT_DE_PASSE@HÔTE:PORT/pybac?ssl-mode=REQUIRED` |
+| `DATABASE_URL` | L'adresse de la base (PostgreSQL ou MySQL, ex. Aiven : *Service URI*) |
 | `ADMIN_EMAILS` | Facultatif : des e-mails d'administrateurs, séparés par des virgules (le plus simple est `npm run admin`, plus bas) |
 | `SIGNUP_CODE` | Facultatif : un code à donner aux élèves. S'il est rempli, il est demandé pour créer un compte |
 | `DATABASE_CA_CERT` | Facultatif : le chemin du certificat `ca.pem` d'Aiven, pour vérifier que le serveur parle bien à votre base |

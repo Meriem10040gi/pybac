@@ -1,9 +1,10 @@
-// Where the accounts, sessions and progress are kept: MySQL (DATABASE_URL), or, only for local
-// development without a database, in memory (everything is lost when the server stops).
+// Where the accounts, sessions and progress are kept: PostgreSQL or MySQL (DATABASE_URL),
+// or, only for local development without a database, in memory (everything is lost when the server stops).
 //
 // The tables are created if they do not exist, and never dropped or changed by the app: deploying
 // a new version keeps all the accounts and all the progress.
-import mysql, { type Pool, type RowDataPacket } from 'mysql2/promise';
+import mysql, { type Pool as MysqlPool, type RowDataPacket } from 'mysql2/promise';
+import pg from 'pg';
 import { readFileSync } from 'node:fs';
 
 import { EMPTY, normalize, type Saved } from '../src/state/merge.js';
@@ -29,6 +30,169 @@ export interface Store {
   listUsers(): Promise<UserWithProgress[]>;
   /** Deletes the account, its sessions and its progress. */
   deleteUser(userId: number): Promise<void>;
+}
+
+type UserRow = { id: number; email: string; password_hash: string; is_admin: number | boolean; created_at: Date; last_login_at: Date | null };
+const toUser = (r: UserRow): User => ({
+  id: r.id,
+  email: r.email,
+  passwordHash: r.password_hash,
+  isAdmin: Boolean(r.is_admin),
+  createdAt: r.created_at,
+  lastLoginAt: r.last_login_at,
+});
+
+/** A JSON column comes back parsed (MySQL/PostgreSQL) or as text (MariaDB). */
+const parseData = (d: unknown): Saved => normalize(typeof d === 'string' ? JSON.parse(d) : d);
+
+// ---------------------------------------------------------------- PostgreSQL
+
+const PG_SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(254) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL,
+    last_login_at TIMESTAMPTZ NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS sessions (
+    token_hash CHAR(64) NOT NULL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS progress (
+    user_id INTEGER NOT NULL PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
+    data JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions (user_id)`,
+];
+
+function pgPoolFromUrl(url: string): pg.Pool {
+  const u = new URL(url);
+  const sslMode = (u.searchParams.get('sslmode') ?? u.searchParams.get('ssl-mode') ?? '').toLowerCase();
+  const ca = process.env.DATABASE_CA_CERT?.trim();
+  let ssl: pg.ConnectionConfig['ssl'];
+  if (ca) {
+    ssl = {
+      ca: ca.startsWith('-----BEGIN') ? ca.replace(/\\n/g, '\n') : readFileSync(ca, 'utf8'),
+      rejectUnauthorized: true,
+    };
+  } else if (sslMode && sslMode !== 'disable') {
+    ssl = { rejectUnauthorized: false };
+    console.warn('[db] connexion chiffrée sans vérification du certificat : ajoutez DATABASE_CA_CERT pour le vérifier');
+  }
+
+  return new pg.Pool({
+    host: u.hostname,
+    port: u.port ? Number(u.port) : 5432,
+    user: decodeURIComponent(u.username),
+    password: decodeURIComponent(u.password),
+    database: decodeURIComponent(u.pathname.replace(/^\//, '')),
+    ssl,
+    max: Number(process.env.DB_POOL_SIZE ?? (process.env.VERCEL ? 2 : 5)),
+  });
+}
+
+export async function postgresStore(url: string): Promise<Store> {
+  const pool = pgPoolFromUrl(url);
+  for (const sql of PG_SCHEMA) await pool.query(sql);
+
+  const { rows: colRows } = await pool.query<{ exists: boolean }>(
+    "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'is_admin') as exists",
+  );
+  if (!colRows[0]?.exists) {
+    await pool.query('ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE');
+    console.log('[db] colonne ajoutée : users.is_admin');
+  }
+
+  const one = async (sql: string, params: unknown[]) => {
+    const { rows } = await pool.query<UserRow>(sql, params);
+    return rows[0] ? toUser(rows[0]) : null;
+  };
+
+  return {
+    async createUser(email, passwordHash) {
+      try {
+        const { rows } = await pool.query<UserRow>(
+          'INSERT INTO users (email, password_hash, created_at) VALUES ($1, $2, NOW()) RETURNING *',
+          [email, passwordHash],
+        );
+        return rows[0] ? toUser(rows[0]) : null;
+      } catch (e: unknown) {
+        if ((e as { code?: string })?.code === '23505') return null;
+        throw e;
+      }
+    },
+    userByEmail: (email) => one('SELECT * FROM users WHERE email = $1', [email]),
+    userById: (id) => one('SELECT * FROM users WHERE id = $1', [id]),
+    async setPassword(userId, passwordHash) {
+      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, userId]);
+    },
+    async setAdmin(userId, on) {
+      await pool.query('UPDATE users SET is_admin = $1 WHERE id = $2', [on, userId]);
+    },
+    async touchLogin(userId) {
+      await pool.query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [userId]);
+      await pool.query('DELETE FROM sessions WHERE expires_at < NOW()');
+    },
+    async createSession(tokenHash, userId, expiresAt) {
+      await pool.query(
+        'INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES ($1, $2, NOW(), $3)',
+        [tokenHash, userId, expiresAt],
+      );
+    },
+    sessionUser: (tokenHash) =>
+      one(
+        'SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = $1 AND s.expires_at > NOW()',
+        [tokenHash],
+      ),
+    async deleteSession(tokenHash) {
+      await pool.query('DELETE FROM sessions WHERE token_hash = $1', [tokenHash]);
+    },
+    async deleteSessions(userId) {
+      await pool.query('DELETE FROM sessions WHERE user_id = $1', [userId]);
+    },
+    async getProgress(userId) {
+      const { rows } = await pool.query<{ data: unknown }>('SELECT data FROM progress WHERE user_id = $1', [userId]);
+      return rows[0] ? parseData(rows[0].data) : EMPTY;
+    },
+    async updateProgress(userId, f) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const { rows } = await client.query<{ data: unknown }>('SELECT data FROM progress WHERE user_id = $1 FOR UPDATE', [userId]);
+        const next = normalize(f(rows[0] ? parseData(rows[0].data) : EMPTY));
+        await client.query(
+          `INSERT INTO progress (user_id, data, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (user_id) DO UPDATE SET data = EXCLUDED.data, updated_at = EXCLUDED.updated_at`,
+          [userId, JSON.stringify(next)],
+        );
+        await client.query('COMMIT');
+        return next;
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+    },
+    async deleteUser(userId) {
+      await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+    },
+    async listUsers() {
+      const { rows } = await pool.query<UserRow & { data: unknown; updated_at: Date | null }>(
+        'SELECT u.*, p.data, p.updated_at FROM users u LEFT JOIN progress p ON p.user_id = u.id ORDER BY u.email',
+      );
+      return rows.map((r) => {
+        const { passwordHash: _hidden, ...user } = toUser(r);
+        return { ...user, progress: r.data ? parseData(r.data) : EMPTY, progressUpdatedAt: r.updated_at };
+      });
+    },
+  };
 }
 
 // ---------------------------------------------------------------- MySQL
@@ -63,7 +227,7 @@ const SCHEMA = [
 const ADDED_COLUMNS = [{ table: 'users', column: 'is_admin', sql: 'ALTER TABLE users ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0 AFTER password_hash' }];
 
 /** mysql://user:password@host:port/database?ssl-mode=REQUIRED (the format given by Aiven). */
-function poolFromUrl(url: string): Pool {
+function mysqlPoolFromUrl(url: string): MysqlPool {
   const u = new URL(url);
   const sslMode = (u.searchParams.get('ssl-mode') ?? u.searchParams.get('sslmode') ?? '').toUpperCase();
   // DATABASE_CA_CERT: the path of ca.pem, or its content (-----BEGIN CERTIFICATE----- …), handy on
@@ -94,14 +258,13 @@ function poolFromUrl(url: string): Pool {
   });
 }
 
-type UserRow = RowDataPacket & { id: number; email: string; password_hash: string; is_admin: number; created_at: Date; last_login_at: Date | null };
-const toUser = (r: UserRow): User => ({ id: r.id, email: r.email, passwordHash: r.password_hash, isAdmin: !!r.is_admin, createdAt: r.created_at, lastLoginAt: r.last_login_at });
-
-/** A JSON column comes back parsed (MySQL) or as text (MariaDB). */
-const parseData = (d: unknown): Saved => normalize(typeof d === 'string' ? JSON.parse(d) : d);
+type MysqlUserRow = RowDataPacket & UserRow;
 
 export async function mysqlStore(url: string): Promise<Store> {
-  const pool = poolFromUrl(url);
+  if (url.startsWith('postgres://') || url.startsWith('postgresql://')) {
+    return postgresStore(url);
+  }
+  const pool = mysqlPoolFromUrl(url);
   for (const sql of SCHEMA) await pool.query(sql);
   for (const c of ADDED_COLUMNS) {
     const [rows] = await pool.query<RowDataPacket[]>(
@@ -115,7 +278,7 @@ export async function mysqlStore(url: string): Promise<Store> {
   }
 
   const one = async (sql: string, params: unknown[]) => {
-    const [rows] = await pool.query<UserRow[]>(sql, params);
+    const [rows] = await pool.query<MysqlUserRow[]>(sql, params);
     return rows[0] ? toUser(rows[0]) : null;
   };
 
@@ -152,9 +315,10 @@ export async function mysqlStore(url: string): Promise<Store> {
     async deleteSessions(userId) {
       await pool.execute('DELETE FROM sessions WHERE user_id = ?', [userId]);
     },
-    async getProgress(userId) {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT data FROM progress WHERE user_id = ?', [userId]);
-      return rows[0] ? parseData(rows[0].data) : EMPTY;
+    getProgress(userId) {
+      return pool.query<RowDataPacket[]>('SELECT data FROM progress WHERE user_id = ?', [userId]).then(([rows]) =>
+        rows[0] ? parseData(rows[0].data) : EMPTY
+      );
     },
     async updateProgress(userId, f) {
       const conn = await pool.getConnection();
@@ -181,7 +345,7 @@ export async function mysqlStore(url: string): Promise<Store> {
       await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
     },
     async listUsers() {
-      const [rows] = await pool.query<(UserRow & { data: unknown; updated_at: Date | null })[]>(
+      const [rows] = await pool.query<(MysqlUserRow & { data: unknown; updated_at: Date | null })[]>(
         'SELECT u.*, p.data, p.updated_at FROM users u LEFT JOIN progress p ON p.user_id = u.id ORDER BY u.email',
       );
       return rows.map((r) => {
@@ -190,6 +354,19 @@ export async function mysqlStore(url: string): Promise<Store> {
       });
     },
   };
+}
+
+// ---------------------------------------------------------------- Auto Store (PostgreSQL / MySQL)
+
+export async function createStore(url: string): Promise<Store> {
+  if (url.startsWith('postgres://') || url.startsWith('postgresql://')) {
+    const store = await postgresStore(url);
+    console.log('[db] PostgreSQL connectée');
+    return store;
+  }
+  const store = await mysqlStore(url);
+  console.log('[db] MySQL connectée');
+  return store;
 }
 
 // ---------------------------------------------------------------- memory (local development only)

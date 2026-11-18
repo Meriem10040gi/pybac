@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { Config } from './app.js';
-import { memoryStore, mysqlStore, type Store } from './store.js';
+import { createStore, memoryStore, type Store } from './store.js';
 
 export async function configFromEnv(): Promise<Config> {
   const production = process.env.NODE_ENV === 'production';
@@ -13,8 +13,7 @@ export async function configFromEnv(): Promise<Config> {
 
   let store: Store;
   if (url) {
-    store = await mysqlStore(url);
-    console.log('[db] MySQL connectée');
+    store = await createStore(url);
   } else if (production) {
     throw new Error('[db] DATABASE_URL manque : en production, le serveur ne démarre pas sans base de données.');
   } else {
